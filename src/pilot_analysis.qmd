@@ -1,0 +1,184 @@
+---
+title: "Pilot analysis"
+author: "Jae Yeon Kim"
+format: html
+editor: visual
+---
+
+# Import libs
+
+```{r}
+
+if (!require(pacman)) install.packages("pacman")
+
+pacman::p_load(tidyverse, here, readxl, estimatr, modelsummary, effectsize)
+```
+
+# Import files
+
+```{r}
+df <- read_xlsx(here("raw_data", "pilot_data_raw.xlsx"), skip = 1)
+```
+
+# Wrangle data
+
+```{r}
+# remove survey distribution related variables
+df <- df[,18:ncol(df)]
+
+df <- df[,-c((ncol(df) - 6):ncol(df))]
+```
+
+```{r}
+org_questions <- names(df)
+```
+
+```{r}
+names(df) <- c("age", "gender", "gender_other", "race_id", "born_us",
+               "party_id", "strong_dem_id", "strong_gop_id", "leaning_party_id", # q1-9
+               "china_virus_racist", "violence_against_asians", # q10-11
+               "discrimination_happened_covid", # q12 
+               "important_democracy_scale", # q13  
+               "pol_strong_leader","pol_democratic", "pol_army_rule", # q14-16 
+               "attention_check", # q17 
+               "asian_id", "asian_id_other", "asian_id_importance", # q18-20
+               "ethnic_linked_fate", "racial_linked_fate", "asian_interests", # q21-23 
+               "american_linked_fate", "american_id_importance", # q24-25
+               "china_fav", "china_threat", "china_demo") # q26-28
+```
+
+```{r}
+# China virus statement 
+df$china_virus_racist[df$china_virus_racist == 31] <- 5
+df$china_virus_racist[df$china_virus_racist == 32] <- 4
+df$china_virus_racist[df$china_virus_racist == 33] <- 3
+df$china_virus_racist[df$china_virus_racist == 34] <- 2
+df$china_virus_racist[df$china_virus_racist == 35] <- 1
+```
+
+```{r}
+# Democrat ID dummy 
+df$dem <- ifelse(df$party_id == 1, 1, 0)
+
+df$gop <- ifelse(df$party_id == 2, 1, 0)
+```
+
+```{r}
+# Violence against Asians 
+df <- df %>%
+  mutate(violence_asian_cat = recode(violence_against_asians,
+                                     `1` = "3", 
+                                     `2` = "1", 
+                                     `3` = "2")) %>%
+  mutate(violence_asian_cat = as.numeric(violence_asian_cat)) 
+
+# Experiencing racial discrimination
+
+df$racial_covid_dis_cat <- ifelse(df$discrimination_happened_covid != "11", 1, 0)
+```
+
+```{r}
+df$chinese <- ifelse(df$asian_id == 1, 1, 0)
+
+cor.test(df$china_demo, df$china_threat)
+```
+
+```{r}
+"ethnic_linked_fate", "racial_linked_fate", "asian_interests"
+```
+
+```{r}
+df <- df %>%
+  mutate(ethnic_linked_fate = recode(ethnic_linked_fate,
+                                     `1` = "5",
+                                     `8` = "4",
+                                     `9` = "3",
+                                     `10` = "2",
+                                     `11` = "1")) %>%
+  mutate(ethnic_linked_fate = as.numeric(ethnic_linked_fate))
+
+df <- df %>%
+  mutate(ethnic_linked_fate = recode(ethnic_linked_fate,
+                                     `1` = "5",
+                                     `8` = "4",
+                                     `9` = "3",
+                                     `10` = "2",
+                                     `11` = "1")) %>%
+  mutate(ethnic_linked_fate = as.numeric(ethnic_linked_fate))
+
+df$racial_linked_fate <- (6 - df$racial_linked_fate)
+
+df$asian_interests <- (6- df$asian_interests)
+```
+
+# Exploratory analysis 
+
+```{r}
+mod_main <- tidy(standardize(lm(china_virus_racist ~ factor(chinese) + important_democracy_scale + china_fav + china_threat + china_demo + american_id_importance + factor(dem) + factor(gop) + ethnic_linked_fate + racial_linked_fate + asian_interests + violence_asian_cat + factor(racial_covid_dis_cat), data = df)), conf.int = T) %>%
+  filter(!str_detect(term, "Intercept"))
+
+mod_main$term <-  c("Chinese",
+                   "Caring democracy", 
+                   "China favorability", 
+                   "China threatening",
+                   "China democratic",
+                   "American ID importance",
+                   "DEM",
+                   "GOP",
+                   "Ethnic linked fate",
+                   "Racial linked fate",
+                   "Common Asian interests",
+                   "Violence increased against Asians during COVID",
+                   "Experienced racial discrimination during COVID")
+
+mod_main %>%
+  ggplot(aes(x = fct_reorder(term, estimate), y = estimate, ymax = conf.high, ymin = conf.low)) +
+  geom_pointrange() +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = 2, color = "red") +
+  theme_minimal() +
+  labs(x = "", 
+       y = "Regression coefficients and 95% confidence intervals",
+       title = "DV: Calling COVID-19 the Chinese virus is racist?") 
+
+ggsave(here("outputs", "china_virus_assoc.png"))
+```
+
+
+```{r}
+mod <- df %>%
+  mutate(chinese = ifelse(chinese == 1, "Chinese", "Non-Chinese-Asian")) %>%
+  group_by(chinese) %>%
+  do(tidy(standardize(lm(china_virus_racist ~ important_democracy_scale + china_fav + china_threat + china_demo + american_id_importance + factor(dem) + factor(gop) + ethnic_linked_fate + racial_linked_fate + asian_interests + violence_asian_cat + factor(racial_covid_dis_cat), data = .)), conf.int = T))
+
+tidy_mod <- mod %>%
+  filter(!str_detect(term, "Intercept"))
+
+tidy_mod$term <- rep(
+                   c("Caring democracy", 
+                   "China favorability", 
+                   "China threatening",
+                   "China democratic",
+                   "American ID importance",
+                   "DEM",
+                   "GOP",
+                   "Ethnic linked fate",
+                   "Racial linked fate",
+                   "Common Asian interests",
+                   "Violence increased against Asians during COVID",
+                   "Experienced racial discrimination during COVID"), 2)
+```
+
+```{r}
+tidy_mod %>%
+  ggplot(aes(x = fct_reorder(term, estimate), y = estimate, ymax = conf.high, ymin = conf.low, col = chinese)) +
+  geom_pointrange() +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = 2, color = "red") +
+  theme_minimal() +
+  labs(x = "", 
+       y = "Regression coefficients and 95% confidence intervals",
+       title = "DV: Calling COVID-19 the Chinese virus is racist?") 
+
+ggsave(here("outputs", "china_virus_chinese.png"))
+```

@@ -24,7 +24,7 @@ my_multi_arm_designer <- function(sample_size = 1000) {
   
   N <- sample_size
   outcome_means <- c(0.7, 0.7 + 0.05, 0.7 + 0.02)
-  outcome_sds <- c(0, 0.01, 0.01)
+  outcome_sds <- c(0.01, 0.02, 0.02)
   sd_i <- 0.3 
 
   population <- declare_population(
@@ -106,7 +106,7 @@ diagnose_design(my_multi_arm_designer(sample_size = 2000))
 
 designs <- expand_design(
   my_multi_arm_designer, # multi arm designer
-  sample_size = seq(2000, 5000, by = 250)
+  sample_size = seq(1500, 5000, by = 50)
 )
 
 # Diagnose
@@ -117,11 +117,11 @@ diag_outs <- diagnose_design(designs, sims = 500)
 
 power_plot <- diag_outs$diagnosands_df %>%
   ggplot(aes(
-    x = sample_size, y = power,
-    ymax = power + 1.96 * `se(power)`,
-    ymin = power - 1.96 * `se(power)`
-  )) +
-  geom_pointrange() +
+    x = sample_size, y = power)) +
+  geom_line() +
+  geom_ribbon(aes(ymax = power + 1.96 * `se(power)`,
+                  ymin = power - 1.96 * `se(power)`),
+              alpha = 0.2) +
   facet_wrap(~estimator) +
   labs(
     x = "Sample size",
@@ -155,4 +155,5 @@ calculate_interaction_effect_power <- function(interaction_effect_ratio) {
   
 }
 
-calculate_interaction_effect_power(interaction_effect_ratio = 1)
+calculate_interaction_effect_power(interaction_effect_ratio = 1); 
+calculate_interaction_effect_power(interaction_effect_ratio = 0.5)
