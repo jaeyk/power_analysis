@@ -11,7 +11,7 @@ editor: visual
 
 if (!require(pacman)) install.packages("pacman")
 
-pacman::p_load(tidyverse, here, readxl, estimatr, modelsummary, effectsize)
+pacman::p_load(tidyverse, here, readxl, estimatr, modelsummary, effectsize, broom)
 ```
 
 # Import files
@@ -84,19 +84,6 @@ cor.test(df$china_demo, df$china_threat)
 ```
 
 ```{r}
-"ethnic_linked_fate", "racial_linked_fate", "asian_interests"
-```
-
-```{r}
-df <- df %>%
-  mutate(ethnic_linked_fate = recode(ethnic_linked_fate,
-                                     `1` = "5",
-                                     `8` = "4",
-                                     `9` = "3",
-                                     `10` = "2",
-                                     `11` = "1")) %>%
-  mutate(ethnic_linked_fate = as.numeric(ethnic_linked_fate))
-
 df <- df %>%
   mutate(ethnic_linked_fate = recode(ethnic_linked_fate,
                                      `1` = "5",
@@ -111,10 +98,12 @@ df$racial_linked_fate <- (6 - df$racial_linked_fate)
 df$asian_interests <- (6- df$asian_interests)
 ```
 
-# Exploratory analysis 
+# Exploratory analysis
+
+## COVID 19 virus 
 
 ```{r}
-mod_main <- tidy(standardize(lm(china_virus_racist ~ factor(chinese) + important_democracy_scale + china_fav + china_threat + china_demo + american_id_importance + factor(dem) + factor(gop) + ethnic_linked_fate + racial_linked_fate + asian_interests + violence_asian_cat + factor(racial_covid_dis_cat), data = df)), conf.int = T) %>%
+mod_main <- broom::tidy(standardize(lm(china_virus_racist ~ factor(chinese) + important_democracy_scale + china_fav + china_threat + china_demo + american_id_importance + factor(dem) + factor(gop) + ethnic_linked_fate + racial_linked_fate + asian_interests + violence_asian_cat + factor(racial_covid_dis_cat), data = df)), conf.int = T) %>%
   filter(!str_detect(term, "Intercept"))
 
 mod_main$term <-  c("Chinese",
@@ -143,7 +132,6 @@ mod_main %>%
 
 ggsave(here("outputs", "china_virus_assoc.png"))
 ```
-
 
 ```{r}
 mod <- df %>%
@@ -182,3 +170,42 @@ tidy_mod %>%
 
 ggsave(here("outputs", "china_virus_chinese.png"))
 ```
+
+## Linked fates 
+
+```{r}
+rl_mod <- broom::tidy(standardize(lm(racial_linked_fate ~ factor(chinese) + important_democracy_scale + china_fav + china_threat + china_demo + american_id_importance + factor(dem) + factor(gop) + asian_interests + violence_asian_cat + factor(racial_covid_dis_cat), data = df)), conf.int = T) %>%
+  filter(!str_detect(term, "Intercept"))
+
+el_mod <- broom::tidy(standardize(lm(ethnic_linked_fate ~ factor(chinese) + important_democracy_scale + china_fav + china_threat + china_demo + american_id_importance + factor(dem) + factor(gop) + asian_interests + violence_asian_cat + factor(racial_covid_dis_cat), data = df)), conf.int = T) %>%
+  filter(!str_detect(term, "Intercept"))
+
+bl_mod <- bind_rows(mutate(rl_mod, dv = "Racial linked fate"), mutate(el_mod, dv = "Ethnic linked fate")) 
+
+bl_mod$term <- rep(
+                   c(
+                   "Chinese",
+                   "Caring democracy", 
+                   "China favorability", 
+                   "China threatening",
+                   "China democratic",
+                   "American ID importance",
+                   "DEM",
+                   "GOP",
+                   "Common Asian interests",
+                   "Violence increased against Asians during COVID",
+                   "Experienced racial discrimination during COVID"), 2)
+
+```
+
+```{r}
+bl_mod %>%
+  ggplot(aes(x = fct_reorder(term, estimate), y = estimate, ymax = conf.high, ymin = conf.low, col = dv)) +
+  geom_pointrange() +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = 2, color = "red") +
+  theme_minimal() +
+  labs(x = "", 
+       y = "Regression coefficients and 95% confidence intervals") 
+```
+
