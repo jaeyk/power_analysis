@@ -34,7 +34,9 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 if (!require(pacman)) install.packages("pacman")
 
-pacman::p_load(tidyverse, here, readxl, estimatr, modelsummary, effectsize, broom, markdown)
+pacman::p_load(tidyverse, here, readxl, estimatr, modelsummary, effectsize, broom, markdown,
+               survey,  # weighted proportion tables
+               anesrake) # creating weight variables
 
 df <- read_xlsx(here("raw_data", "pilot_data_raw.xlsx"), skip = 1)
 ```
@@ -151,6 +153,44 @@ df <- df %>%
     asian_id == 5 ~ "Korean",
     asian_id == 6 ~ "Others"
   ))
+```
+
+
+```{r include=FALSE}
+# 2020 estimates from the US Census
+# Chinese - 24%
+# Indian - 21%
+# Foreign born rate - 60%
+# Female - 53%
+
+df_unweighted <- svydesign(
+    id = ~1, 
+    data = df
+)
+
+# population-level distributions 
+chinese_dist <- data.frame(chinese = c(1, 0),
+                           Freq = nrow(df) * c(0.24, 0.76))
+
+indian_dist <- data.frame(indian = c(1, 0),
+                          Freq = nrow(df) * c(0.21, 0.79))
+
+usborn_dist <- data.frame(us_born_cat = c(1, 0),
+                          Freq = nrow(df) * c(0.4, 0.6))
+
+female_dist <- data.frame(female = c(1, 0),
+                          Freq = nrow(df) * c(0.53, 1-0.53))
+
+# raking 
+df_raked <- rake(design = df_unweighted,
+                 sample.margins = list(~chinese, ~indian, ~female, ~us_born_cat),
+                 population.margins = list(chinese_dist, indian_dist, female_dist, usborn_dist))
+
+# summarize weights 
+summary(weights(df_raked))
+
+# add weights 
+df$weights <- weights(df_raked)
 ```
 
 # Summary statistics
@@ -283,14 +323,17 @@ df %>%
 
 In the following Tables \@ref(tab:main-table), all regression coefficients are standardized. OLS models and robust standard errors are applied, and p-values are included inside the parentheses.
 
-Table \@ref(tab:main-chinese) presents the estimated associations between the "Chinese virus racist" variable and predictors, while Table \@ref(tab:main-table) presents the estimated associations between all five outcome variables and predictors.
+* Table \@ref(tab:main-chinese) presents the estimated associations between the "Chinese virus racist" variable and predictors. Since `Democracy importance` and `Democratic system favorability` are conceptually close, I included one at a time. Models 3 and 5 includes `Democracy importance` while model 4 includes `Democratic system favorability.` Model 5 incorporates population weights that were created using the raking method, which was based on the Chinese, Indian, Female, and US-born dummy variables. The target variables were obtained from the 2020 US Census.
+
+Table \@ref(tab:main-table) presents the estimated associations between all five outcome variables and predictors.
 
 ```{r, echo = FALSE}
 mods_cv <- list(
   "Model 1" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance, df)),
   "Model 2" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo, df)),
-  "Model 3" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + pol_strong_leader + pol_democratic + pol_army_rule + china_fav + china_threat + china_demo + american_id_importance + national_attachment, df)),
-  "Model 4" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + pol_strong_leader + pol_democratic + pol_army_rule + china_fav + china_threat + china_demo + dem + gop + american_id_importance + national_attachment, df))
+  "Model 3" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + american_id_importance + national_attachment, df)),
+  "Model 4" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + pol_democratic + china_fav + china_threat + china_demo + dem + gop + american_id_importance + national_attachment, df)),
+  "Model 5" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + female + age + us_born_cat + dem + gop + american_id_importance + national_attachment + chinese, df, weight = weights))
 )
 ```
 
@@ -311,8 +354,11 @@ modelsummary(
 ```{r, echo = FALSE}
 mods <- list(
   "Chinese virus racist" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + female + age + us_born_cat + dem + gop + american_id_importance + national_attachment + chinese, df)),
+  "Chinese virus racist (weighted)" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + female + age + us_born_cat + dem + gop + american_id_importance + national_attachment + chinese, df, weight = weights)),
   "Racial linked fate" = standardize(lm(racial_linked_fate ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + female + age + us_born_cat + dem + gop + american_id_importance + national_attachment + chinese, df)),
-  "Ethnic linked fate" = standardize(lm(ethnic_linked_fate ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + female + age + us_born_cat + dem + gop + american_id_importance + national_attachment + chinese, df))
+  "Racial linked fate (weighted)" = standardize(lm(racial_linked_fate ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + female + age + us_born_cat + dem + gop + american_id_importance + national_attachment + chinese, df, weight = weights)),
+  "Ethnic linked fate" = standardize(lm(ethnic_linked_fate ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + female + age + us_born_cat + dem + gop + american_id_importance + national_attachment + chinese, df)),
+  "Ethnic linked fate (weighted)" = standardize(lm(ethnic_linked_fate ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + female + age + us_born_cat + dem + gop + american_id_importance + national_attachment + chinese, df, weight = weights))
 )
 ```
 
