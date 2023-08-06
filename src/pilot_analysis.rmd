@@ -219,12 +219,12 @@ cm <- c(
   "violence_asian_cat" = "Violence increased against Asians during COVID",
   "racial_covid_dis_cat" = "Experienced racial discrimination during COVID",
   "democracy_importance" = "Democracy importance",
-  "china_fav" = "China favorability",
-  "china_threat" = "China threatening",
-  "china_demo" = "China democratic",
   "pol_strong_leader" = "Strong leader favorability",
   "pol_democratic" = "Democratic system favorability",
   "pol_army_rule" = "Army rule favorability",
+  "china_fav" = "China favorability",
+  "china_threat" = "China threatening",
+  "china_demo" = "China democratic",
   "american_id_importance" = "American ID importance",
   "national_attachment" = "National attachment",
   "asian_id_importance" = "Asian ID importance",
@@ -330,7 +330,7 @@ Table \@ref(tab:main-table) presents the estimated associations between all five
 ```{r, echo = FALSE}
 mods_cv <- list(
   "Model 1" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance, df)),
-  "Model 2" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo, df)),
+  "Model 2" = standardize(lm(china_virus_racist ~ democracy_importance + china_fav + china_threat + china_demo, df)),
   "Model 3" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + american_id_importance + national_attachment, df)),
   "Model 4" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + pol_democratic + china_fav + china_threat + china_demo + dem + gop + american_id_importance + national_attachment, df)),
   "Model 5" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance + china_fav + china_threat + china_demo + female + age + us_born_cat + dem + gop + american_id_importance + national_attachment + chinese, df, weight = weights))
