@@ -1,7 +1,7 @@
 ---
-title: "Pilot analysis"
-author: "Jae Yeon Kim, Joan Cho, Taeku Lee, DG Kim"
-date: "`r Sys.Date()`"
+title: "Appendix"
+#author: "Jae Yeon Kim, Joan Cho, Taeku Lee, DG Kim"
+#date: "`r Sys.Date()`"
 output:
   #bookdown::html_document2:
   bookdown::pdf_document2:
@@ -327,6 +327,20 @@ In the following Tables \@ref(tab:main-table), all regression coefficients are s
 
 Table \@ref(tab:main-table) presents the estimated associations between all five outcome variables and predictors.
 
+```{r, include = FALSE}
+apsa_mods <- list(
+"Chinese virus statement" = standardize(lm(china_virus_racist ~ racial_covid_dis_cat + democracy_importance + china_threat, df)),
+
+"Ethnic linked fate" = standardize(lm(ethnic_linked_fate ~ racial_covid_dis_cat + democracy_importance + china_threat, df)),
+
+"Racial linked fate" = standardize(lm(racial_linked_fate ~ racial_covid_dis_cat + democracy_importance + china_threat, df))
+)
+
+modelsummary::modelplot(apsa_mods)
+
+ggsave(here("outputs", "apsa_figure.png"))
+```
+
 ```{r, echo = FALSE}
 mods_cv <- list(
   "Model 1" = standardize(lm(china_virus_racist ~ violence_asian_cat + racial_covid_dis_cat + democracy_importance, df)),
@@ -343,8 +357,8 @@ modelsummary(
   mods_cv,
   coef_omit = "Intercept",
   fmt = 2,
-  estimate = "{estimate}{stars}",
-  statistic = "({p.value})",
+  estimate = "{estimate}[{conf.low}, {conf.high}]",
+  statistic = "({p.value}){stars}",
   coef_map = cm,
   vcov = "robust",
   output = "markdown"
@@ -368,8 +382,8 @@ modelsummary(
   mods,
   coef_omit = "Intercept",
   fmt = 2,
-  estimate = "{estimate}{stars}",
-  statistic = "({p.value})",
+  estimate = "{estimate}[{conf.low}, {conf.high}]",
+  statistic = "({p.value}){stars}",
   coef_map = cm,
   vcov = "robust",
   output = "markdown"
@@ -391,8 +405,8 @@ df %>%
     title = "Chinese virus racist",
     coef_omit = "Intercept",
     fmt = 2,
-    estimate = "{estimate}{stars}",
-    statistic = "({p.value})",
+    estimate = "{estimate}[{conf.low}, {conf.high}]",
+    statistic = "({p.value}){stars}",
     coef_map = cm,
     vcov = "robust",
     output = "markdown"
@@ -410,8 +424,8 @@ df %>%
     title = "Racial linked fate",
     coef_omit = "Intercept",
     fmt = 2,
-    estimate = "{estimate}{stars}",
-    statistic = "({p.value})",
+    estimate = "{estimate}[{conf.low}, {conf.high}]",
+    statistic = "({p.value}){stars}",
     coef_map = cm,
     vcov = "robust",
     output = "markdown"
@@ -429,8 +443,8 @@ df %>%
     title = "Ethnic linked fate",
     coef_omit = "Intercept",
     fmt = 2,
-    estimate = "{estimate}{stars}",
-    statistic = "({p.value})",
+    estimate = "{estimate}[{conf.low}, {conf.high}]",
+    statistic = "({p.value}){stars}",
     coef_map = cm,
     vcov = "robust",
     output = "markdown"
@@ -450,8 +464,8 @@ df %>%
     title = "Chinese virus racist",
     coef_omit = "Intercept",
     fmt = 2,
-    estimate = "{estimate}{stars}",
-    statistic = "({p.value})",
+    estimate = "{estimate}[{conf.low}, {conf.high}]",
+    statistic = "({p.value}){stars}",
     coef_map = cm,
     vcov = "robust",
     output = "markdown"
@@ -469,8 +483,8 @@ df %>%
     title = "Racial linked fate",
     coef_omit = "Intercept",
     fmt = 2,
-    estimate = "{estimate}{stars}",
-    statistic = "({p.value})",
+    estimate = "{estimate}[{conf.low}, {conf.high}]",
+    statistic = "({p.value}){stars}",
     coef_map = cm,
     vcov = "robust",
     output = "markdown"
@@ -488,8 +502,8 @@ df %>%
     title = "Ethnic linked fate",
     coef_omit = "Intercept",
     fmt = 2,
-    estimate = "{estimate}{stars}",
-    statistic = "({p.value})",
+    estimate = "{estimate}[{conf.low}, {conf.high}]",
+    statistic = "({p.value}){stars}",
     coef_map = cm,
     vcov = "robust",
     output = "markdown"
@@ -508,8 +522,8 @@ df %>%
     title = "Chinese virus racist",
     coef_omit = "Intercept",
     fmt = 2,
-    estimate = "{estimate}{stars}",
-    statistic = "({p.value})",
+    estimate = "{estimate}[{conf.low}, {conf.high}]",
+    statistic = "({p.value}){stars}",
     coef_map = cm,
     vcov = "robust",
     output = "markdown"
@@ -526,8 +540,8 @@ df %>%
     title = "Racial linked fate",
     coef_omit = "Intercept",
     fmt = 2,
-    estimate = "{estimate}{stars}",
-    statistic = "({p.value})",
+    estimate = "{estimate}[{conf.low}, {conf.high}]",
+    statistic = "({p.value}){stars}",
     coef_map = cm,
     vcov = "robust",
     output = "markdown"
@@ -544,8 +558,8 @@ df %>%
     title = "Ethnic linked fate",
     coef_omit = "Intercept",
     fmt = 2,
-    estimate = "{estimate}{stars}",
-    statistic = "({p.value})",
+    estimate = "{estimate}[{conf.low}, {conf.high}]",
+    statistic = "({p.value}){stars}",
     coef_map = cm,
     vcov = "robust",
     output = "markdown"

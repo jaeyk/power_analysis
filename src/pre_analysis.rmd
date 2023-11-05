@@ -1,0 +1,410 @@
+---
+title: "Unlinking Linked Fate: \n The Push and Pull Factors of Racial Group Consciousness"
+author: Jae Yeon Kim^[Johns Hopkins University, jkim638@jhu.edu], Joan Cho^[Wesleyan
+  University, jecho@wesleyan.edu], Taeku Lee^[Harvard University, taekulee@fas.harvard.edu],
+  DG Kim^[Harvard University, daegyeong\_kim@fas.harvard.edu]
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  pdf_document:
+    number_sections: yes
+    fig_caption: yes
+latex_engine: xelatex
+link-citations: yes
+linkcolor: blue
+subparagraph: yes
+citecolor: blue
+urlcolor: blue
+---
+
+# Abstract
+
+Has the pandemic-driven increase in anti-Asian hate crimes and discrimination heightened racial identity and a sense of linked fate among Asian Americans? Previous studies have focused on the marginalized status of "Asian Americans" as a pan-ethnic group and its impact on racial group consciousness. However, these studies found the relatively low levels of group consciousness and political mobilization among the minority population puzzling. We argue that the literature has overlooked the significant roles of geopolitics (i.e., the China threat) and democratic representation in shaping perceptions of shared racial status among this immigrant-based population. Using a survey experiment based on a representative sample of 2,000 Asian Americans, we aim to show that while geopolitics priming causes chilling effects, democratic representation priming causes boosting effects. 
+
+Project timeline: 
+
+* We ran a pilot survey (see the Appendix) between July 12 and July 20, 2023, via Savanta. The survey firm used quota sampling to select all Asian Americans, with half being Chinese and half being foreign-born. The sample size for the pilot survey was 1,006. 
+
+* We used the pilot survey data to design treatments, determine outcomes, identify moderating variables, and conduct power analysis. 
+
+* The main survey will be launched via YouGov during the week of August 28th or the following week.
+
+* The main survey will take about two weeks for data collection and processing. 
+
+# Literature review 
+
+## Linked fate and Asian American politics 
+
+Since Dawson's seminal work (1994) on the connection between discrimination and group consciousness (i.e., "linked fate"), scholars of race and politics have argued that being racially marginalized is related to the formation of racial group consciousness by mainly using surveys and experiments (for a recent review, see Rogers and Kim 2021). This theoretical framework has also been extended to non-black minority groups, including Asian Americans—citizens and residents of the U.S. of Asian birth or descent. 
+
+## Mixed Evidence on Asian Linked Fate and Its Theoretical Implications 
+
+Nevertheless, there are two limitations to this growing literature: (1) the empirical evidence on the link between perceived discrimination and group consciousness and political identity among Asian Americans is, at best, mixed (Masuoka 2006; Junn and Masuoka 2008; Gay, Hochschild, and White 2016; Kuo, Malhotra, and Mo 2017; Hopkins et al. 2020; Chan, Kim, and Leung 2022), and (2) extending the theory rooted in African Americans to Asian Americans might be fraught with conceptual stretching (McClain et al. 2009; Rogers and Kim 2021; Pérez and Kuo 2022). 
+
+## Pull (democratic representation) and Push Factors (China threat) of Asian American Politics during the Pandemic
+
+We build on these previous studies by elucidating the push and pull factors of Asian American group consciousness and political identity during the pandemic. We argue that the strength of Asian American group consciousness during the pandemic is a function of two attitudes: (1) anti-Asian hate and political representation of Asian Americans (pull factors) and (2) anti-China and/or anti-Chinese attitudes. This theoretical intervention is helpful to (1) explain what unites and breaks apart Asian Americans and (2) analyze the dynamics around the tendency to view Asians as a monolithic group that strengthened its group consciousness and identity during the COVID-19 pandemic. Our key contribution is theoretically identifying and empirically testing the factors that amplify or attenuate the impact of perceived discrimination on the racial and ethnic group consciousness of Asian Americans.
+
+# Experimental design
+
+The vignette experiment design includes one control condition ($Z_{1}$) and three experimental conditions: (1) anti-Asian hate crime news report during COVID ($Z_{2}$), (2) anti-Asian hate crime news report during COVID and the emphasis on China as a threat to the US ($Z_{3}$), and (3) anti-Asian hate crime news report during COVID and the emphasis on the importance of political representation of Asian Americans ($Z_{4}$).
+
+$Z$ is an assignment variable. It has four values. $Z = 1$ is the control group. $Z = 2$ is the first treatment group. $Z = 3$ is the second treatment group. $Z = 4$ is the third treatment group.
+
+1. **Control condition:** Participants will be presented with no vignette (pure control). 
+
+2. **Treatment 1 (anti-Asian hate crime news report during COVID)**: Participants will be presented with [the news report](https://www.nbcnews.com/news/asian-america/anti-asian-hate-crimes-increased-339-percent-nationwide-last-year-repo-rcna14282) that states that "Anti-Asian hate crimes increased 339 percent nationwide in the year 2021.”
+
+**Anti-Asian hate crimes increased 339 percent nationwide last year, report says**
+
+The original article was slightly modified to fit the length of the vignette experiment.
+
+>> According to NBC news, new research finds that hate crimes targeting the Asian American community have reached unprecedented levels. 
+
+>> The compilation of hate crime data, published by the Center for the Study of Hate and Extremism, revealed that anti-Asian hate crime increased by 339 percent last year compared to the year before, with New York, San Francisco, Los Angeles and other cities surpassing their record numbers in 2020.
+
+3. **Treatment 2 (anti-Asian hate crime news report during COVID with emphasis on China as a threat to the US):** Participants will receive the previous news report detailing the increasing number of hate crimes against Asian Americans, as well as [an FBI report](https://www.fbi.gov/video-repository/inside-the-fbi-the-china-threat-042123.mp4/view) on the threat posed by China to the United States.
+
+The original article was slightly modified to fit the length of the vignette experiment.
+
+**Inside the FBI: The China Threat**
+
+>> According to the FBI, there have been some recent criminal charges that demonstrate the lengths the Chinese government will go to to threaten the economic well-being, national security, and democratic values of the United States. 
+
+>> Those complaints outline a number of ways the Chinese government, both in China and here on American soil, is looking to infiltrate groups in America, to spy on those who may have information helpful to China or generally harass those who may disagree with the Chinese government. 
+
+4. **Treatment 3 (anti-Asian hate crime news report during COVID and the emphasis on the importance of political representation of Asian Americans):** Participants will receive the previous new report detailing the increasing number of hate crimes against Asian Americans, as well as [an op-ed](https://rollcall.com/2021/03/30/why-asian-americans-and-pacific-islanders-need-stronger-political-representation/) arguing the importance of political representation for Asian Americans.
+
+The original article was slightly modified to fit the length of the vignette experiment.
+
+**Why Asian Americans and Pacific Islanders need stronger political representation**
+
+>> Once again, the Asian American and Pacific Islander community is grappling with horrifying acts of racism and violence. At last, the rest of the country seems to have noticed.
+
+>> But these alarm bells have been ringing for some time. While many AAPI individuals now feel seen, we still lack serious representation at the highest levels of government. Sens. Tammy Duckworth, D-Ill., and Mazie Hirono, D-Hawaii, have argued that our government needs officials who understand the unique challenges our communities face. Only then can policies meet our specific needs in voting rights, criminal justice reform and economic opportunity.
+
+After reading the vignettes, participants will be asked writing their reactions to the news article(s) in 3 sentences.
+
+After that, they will be asked about their agreement with the statement "the Chinese virus is racist," as well as their perceptions of their linked fates based on their race (i.e., Asian) and ethnicity (e.g., Chinese, Japanese, Filipino, Korean, etc).
+
+# Outcome variables 
+
+- `The Chinese virus statement`: To what extent do you agree with the following statement?: "Calling COVID-19 the Chinese virus is racist." (1-5 scale)
+
+- `Racial linked fate`: To what extent do you agree or disagree with the following statement? "What happens for Asians in this country will have something to do with what happens in your life." (1-5 scale)
+
+- `Ethnic (or national origin) linked fate`: To what extent do you agree or disagree with the following statement? "What happens for [your ethnic] people in this country will have something to do with what happens in your life." (1-5 scale)
+
+# Hypotheses 
+
+## Chinese virus 
+
+* H1a: Priming the increasing anti-Asian hate crimes makes respondents **more likely** to agree with the statement that the "Chinese virus" is racist (the perceived discrimination effect).
+
+* H1b: The perceived discrimination effect **weakens** if respondents are also exposed to a FBI report describing China's threat to the US  (**chilling effect**).
+
+* H2c: The **chilling effect** (H1b) is more likely to be found among non-Chinese respondents than among Chinese respondents.
+
+* H1d: The perceived discrimination effect **strengthens** if respondents are also exposed to an op-ed arguing for greater Asian American political representation (**boosting effect**).
+
+* H1e: The **boosting effect** is more pronounced among respondents who agree with the substantive view of democracy (see below the hypothesis section for further discussion).
+
+## Racial linked fate 
+
+* H2a: Priming the increasing anti-Asian hate crimes makes respondents **more likely** to express their racial linked fate (the perceived discrimination effect).
+
+* H2b: The perceived discrimination effect **weakens** if respondents are also exposed to a FBI report describing China's threat to the US  (**chilling effect**).
+
+* H2c: The **chilling effect** (H2b) is more likely to be found among non-Chinese respondents thanamong Chinese respondents.
+
+* H2d: The perceived discrimination effect **strengthens** if respondents are also exposed to an op-ed arguing for greater Asian American political representation (**boosting effect**).
+
+* H2e: The **boosting effect** (H2d) is more pronounced among respondents who agree with the substantive view of democracy.
+
+## Ethnic linked fate 
+
+* H3a: Priming the increasing anti-Asian hate crimes makes respondents **more likely** to express their ethnic linked fate (the perceived discrimination effect).
+
+* H3b: The perceived discrimination effect **strengthens** if respondents are also exposed to a FBI report describing China's threat to the US (**chilling effect**).
+
+* H3c: The **chilling effect** (H3b) is more likely to be found among non-Chinese respondents than among Chinese respondents.
+
+* H3d: The perceived discrimination effect **strengthens** if respondents are also exposed to an op-ed arguing for greater Asian American political representation (**boosting effect**).
+
+* H3e: The **boosting effect** (H3d) is more pronounced among respondents who agree with the substantive view of democracy.
+
+Because racial and ethnic-linked fates are not necessarily exclusive, both H3b and H3c are plausible. H3b is plausible if Asian American respondents do not wish to be associated with China, but still want to strengthen their sense of ethnic-linked fate in the face of external challenges. H3c is plausible if they believe that greater Asian American political representation will also increase their ethnic group representation. While the outcomes may be the same (observational equivalence), their motivations will come from different sources.
+
+We expect the perceived discrimination effect to strengthen when respondents are also exposed to an op-ed arguing for greater Asian American political representation (H1e, H2e, and H3e), and that effect will be stronger for Asian American individuals who subscribe to a substantive view of democracy (as opposed to a procedural view of democracy). Procedural democracy centers on the procedural aspects of democracy, such as free and fair elections, access to alternative sources of information, freedom of expression, etc. The substantive view of democracy, on the other hand, incorporates regime outputs into one’s evaluation of democracy, such as social equality and good governance. As Backman (2021, 4) states, “Based on a substantive definition, decisions made by a perfectly democratic procedure are nevertheless undemocratic if their content violates substantive democratic demands.” Therefore, we can expect that individuals who consider social equality and good governance as essential characteristics of democracy to demand more Asian American representation and Asian American solidarity in response to perceived discrimination (against Asian Americans). 
+
+# Sampling strategy
+
+We will conduct a survey of 2,000 representative Asian Americans using YouGov as our vendor. According to YouGov's Statement of Work, they will make their best efforts to achieve the following goals:
+
+## Quotas 
+
+- A minimum of 24% of the sample originating from China
+- At least 50% of foreign-born respondents
+
+## Quality Assurance 
+
+* Of the 2,000 respondents, 1,000 will come from YouGov panelists, while the other 1,000 will come from the YouGov platform (other vendors). Responses from the latter group will be quality controlled via the YouGov fraud detector and reviewed for authenticity.
+
+* The sample will be representative in terms of gender, age, and education. 
+
+## Expected duration 
+
+The survey is expected to take approximately two weeks after launch.
+
+# Estimation strategy
+
+The estimand is the **average treatment effect (ATE)**, which we will estimate using the **difference-in-means estimator**.
+
+- $E(Y|Z=2) - E(Y|Z=1)$ represents the effect of anti-Asian hate crime news on the outcomes.
+
+- $E(Y|Z=3) - E(Y|Z=1)$ represents the effect of both anti-Asian hate crime news and the China threat report on the outcomes.
+
+- $E(Y|Z=4) - E(Y|Z=1)$ represents the effect of both anti-Asian hate crime news and the Asian American representation op-ed on the outcomes.
+
+- $E(Y|Z=3) - E(Y|Z=2)$ represents the chilling effect of the China threat report.
+
+- $E(Y|Z=4) - E(Y|Z=2)$ represents the boosting effect of the Asian American representation op-ed.
+
+As we have a budget constraint, our focus here will be on the main effects. As Gelman (2018) [pointed out](https://statmodeling.stat.columbia.edu/2018/03/15/need16/), one needs 16 times the sample size to estimate an interaction than to estimate a main effect. 
+
+# Design diagnosis: Power analysis 
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+# install pkgs
+
+if (!require(pacman)) install.packages("pacman")
+
+pacman::p_load(
+  # DeclareDesign stuff
+  DeclareDesign,
+  DesignLibrary,
+
+  # tidyverse stuff
+  tidyverse,
+  glue,
+  purrr,
+  broom,
+  patchwork,
+  here,
+  plotly
+)
+```
+
+```{r, include = FALSE}
+# Create a custom multi arm designer
+# Reference: https://declaredesign.org/r/designlibrary/articles/multi_arm.html
+
+my_multi_arm_designer <- function(sample_size = 1000, mean_1, mean_2, mean_3) {
+  
+  N <- sample_size
+  outcome_means <- c(0, 0 + mean_1, 0 + mean_2, 0 + mean_3)
+  outcome_sds <- c(0.01, 0.02, 0.02, 0.02)
+  sd_i <- 0.3 
+
+  population <- declare_population(
+    N = N,
+    u_1 = rnorm(N, 0, outcome_sds[1L]),
+    u_2 = rnorm(N, 0, outcome_sds[2L]),
+    u_3 = rnorm(N, 0, outcome_sds[3L]),
+    u_4 = rnorm(N, 0, outcome_sds[4L]),
+    u = rnorm(N) * sd_i
+  )
+
+  potential_outcomes <- declare_potential_outcomes(
+    formula = Y ~
+      (outcome_means[1] + u_1) * (Z == "1") +
+      (outcome_means[2] + u_2) * (Z == "2") +
+      (outcome_means[3] + u_3) * (Z == "3") +
+      (outcome_means[4] + u_4) * (Z == "4") +
+      u,
+    conditions = c("1", "2", "3", "4"),
+    assignment_variables = Z
+  )
+
+  estimand <- declare_inquiries(
+    ate_Y_2_1 = mean(Y_Z_2 - Y_Z_1),
+    ate_Y_3_1 = mean(Y_Z_3 - Y_Z_1),
+    ate_Y_4_1 = mean(Y_Z_4 - Y_Z_1),
+    ate_Y_3_2 = mean(Y_Z_3 - Y_Z_2),
+    ate_Y_4_2 = mean(Y_Z_4 - Y_Z_2)
+  )
+
+  assignment <- declare_assignment(Z = complete_ra(N,
+    num_arms = 4,
+    conditions = c("1", "2", "3", "4")
+  ))
+
+  reveal_Y <- declare_reveal(assignment_variables = Z)
+
+  estimator <- declare_estimator(handler = function(data) {
+    estimates <- rbind.data.frame(
+      ate_Y_2_1 = difference_in_means(
+        formula = Y ~ Z,
+        data = data,
+        condition1 = "1", condition2 = "2"
+      ),
+      ate_Y_3_1 = difference_in_means(
+        formula = Y ~ Z,
+        data = data,
+        condition1 = "1", condition2 = "3"
+      ),
+      ate_Y_4_1 = difference_in_means(
+        formula = Y ~ Z,
+        data = data,
+        condition1 = "1", condition2 = "4"
+      ),
+      ate_Y_3_2 = difference_in_means(
+        formula = Y ~ Z,
+        data = data,
+        condition1 = "2", condition2 = "3"
+      ),
+      ate_Y_4_2 = difference_in_means(
+        formula = Y ~ Z,
+        data = data,
+        condition1 = "2", condition2 = "4"
+      )
+    )
+
+    estimates$estimator <- c(
+      "E(Y|Z=2) - E(Y|Z=1)", "E(Y|Z=3) - E(Y|Z=1)",
+      "E(Y|Z=4) - E(Y|Z=1)", "E(Y|Z=3) - E(Y|Z=2)",
+      "E(Y|Z=4) - E(Y|Z=2)"
+    )
+
+    estimates$inquiry <- rownames(estimates)
+
+    estimates$estimate <- estimates$coefficients
+
+    estimates$term <- NULL
+
+    return(estimates)
+  })
+
+  multi_arm_design <- population + potential_outcomes + assignment + reveal_Y + estimand + estimator
+
+  return(multi_arm_design)
+}
+```
+
+```{r include=FALSE}
+produce_power_plot <- function(mean_1, mean_2, mean_3) {
+# Create the design sets
+
+designs <- expand_design(
+  my_multi_arm_designer, # multi arm designer
+  sample_size = seq(1000, 5000, by = 250),
+  mean_1 = mean_1, 
+  mean_2 = mean_2, 
+  mean_3 = mean_3
+)
+
+# Diagnose
+
+diag_outs <- diagnose_design(designs, sims = 500)
+
+# Visualize
+
+diag_outs$diagnosands_df %>%
+  ggplot(aes(
+    x = sample_size, y = power)) +
+  geom_line() +
+  geom_ribbon(aes(ymax = power + 1.96 * `se(power)`,
+                  ymin = power - 1.96 * `se(power)`),
+              alpha = 0.2) +
+  facet_wrap(~estimator) +
+  labs(
+    x = "Sample size",
+    y = "Diagnosand: power"
+  ) +
+  geom_hline(yintercept = 0.8, col = "red", linetype = "dashed") +
+  theme_minimal()
+
+}
+```
+
+## Chinese virus 
+
+* For this power analysis, we utilized the weighted version of the regression model on the Chinese virus outcome presented in Table 3 of the pilot analysis.
+
+* One of the variables related to Asian hate crimes and democracy importance have high regression coefficients (`> 0.10`). Since these coefficients represent associations and potentially include omitted variable bias, we used their lower bounds (i.e., the lower 95% CIs).
+
+* The other variables have low regression coefficients (`< 0.10`), so we did not apply the same modification.
+
+* $E(Y|Z = 2)$ = (0.10 (the lower 95% CI of the estimated regression coefficient of `Violence increased against Asians during COVID`) + 0.08 (the estimated regression coefficient of `Experienced racial discrimination during COVID`)/2  
+* $E(Y|Z = 3)$ = (0.10 + 0.08)/2 - 0.06 (the estimated regression coefficient of `China threatening`)
+* $E(Y|Z = 4)$ = (0.10 + 0.08)/2 + 0.05 (the lower 95% CI of the estimated regression coefficient of `Democracy importance`) 
+
+```{r cv-fig, echo=FALSE, cache = TRUE}
+cv_power <- produce_power_plot(mean_1 = (0.10 + 0.08)/2, mean_2 = (0.10 + 0.08)/2 - 0.06, mean_3 = (0.10 + 0.08)/2 + 0.05) 
+
+png(filename = here("outputs", "cv_power.png"), width = 6, height = 4, units = 'in', res = 300)
+cv_power 
+dev.off()
+```
+
+## Racial linked fate 
+
+* For this power analysis, we utilized the weighted version of the regression model on the racial linked fate outcome presented in Table 3 of the pilot analysis.
+
+* Variables related to Asian hate crimes and democracy importance have high regression coefficients (`> 0.10`). Since these coefficients represent associations and potentially include omitted variable bias, we used their lower bounds (i.e., the lower 95% CIs).
+
+* The other variable has a low regression coefficient (`< 0.10`), so we did not apply the same modification.
+
+* $E(Y|Z = 2)$ = (0.06 (the lower 95% CI of the estimated regression coefficient of `Violence increased against Asians during COVID`) + 0.09 (the lower 95% CI of the estimated regression coefficient of `Experienced racial discrimination during COVID`)/2  
+* $E(Y|Z = 3)$ = (0.06 + 0.09)/2 - 0.04 (the estimated regression coefficient of `China threatening`)
+* $E(Y|Z = 4)$ = (0.06 + 0.09)/2 + 0.09 (the lower 95% CI of the estimated regression coefficient of `Democracy importance`) 
+
+```{r rl-fig, echo=FALSE, cache = TRUE}
+rl_power <- produce_power_plot(mean_1 = (0.06 + 0.09)/2, mean_2 = (0.06 + 0.09)/2 - 0.04, mean_3 = (0.06 + 0.09)/2 + 0.09)
+
+png(filename = here("outputs", "rl_power.png"), width = 6, height = 4, units = 'in', res = 300)
+rl_power 
+dev.off()
+```
+
+## Ethnic linked fate 
+
+* For this power analysis, we utilized the weighted version of the regression model on the ethnic linked fate outcome presented in Table 3 of the pilot analysis.
+
+* One of the variables related to Asian hate crimes have high regression coefficients (`> 0.10`). Since this coefficient represents an association and potentially includes omitted variable bias, we used its lower bound (i.e., the lower 95% CI).
+
+* The other variables have low regression coefficients (`< 0.10`), so we did not apply the same modification.
+
+* $E(Y|Z = 2)$ = (0.09 (the estimated regression coefficient of `Violence increased against Asians during COVID`) + 0.10 (the lower 95% CI of the estimated regression coefficient of `Experienced racial discrimination during COVID`)/2  
+* $E(Y|Z = 3)$ = (0.09 + 0.10)/2 + 0.02 (the estimated regression coefficient of `China threatening`)
+* $E(Y|Z = 4)$ = (0.09 + 0.10)/2 + 0.10 (the lower 95% CI of the estimated regression coefficient of `Democracy importance`) 
+
+```{r el-fig, echo=FALSE, cache = TRUE}
+el_power <- produce_power_plot(mean_1 = (0.09 + 0.10)/2, mean_2 = (0.09 + 0.10)/2 + 0.02, mean_3 = (0.09 + 0.10)/2 + 0.10) 
+
+png(filename = here("outputs", "el_power.png"), width = 6, height = 4, units = 'in', res = 300)
+el_power 
+dev.off()
+```
+
+# Survey instrument
+
+See the following pages.
+
+# References
+
+Backman, Ludvig. 2021. “Democracy.” Oxford Research Encyclopedia of Politics.
+
+Chan, N. K. M., Kim, J. Y., & Leung, V. (2022). COVID-19 and Asian Americans: How elite messaging and social exclusion shape partisan attitudes. Perspectives on Politics, 20(2), 618-634.
+
+Hopkins, D. J., Kaiser, C. R., Pérez, E. O., Hagá, S., Ramos, C., & Zárate, M. (2020). Does perceiving discrimination influence partisanship among US immigrant minorities? Evidence from five experiments. Journal of Experimental Political Science, 7(2), 112-136.
+
+Masuoka, N. (2006). Together they become one: Examining the predictors of panethnic group consciousness among Asian Americans and Latinos. Social Science Quarterly, 87(5), 993-1011.
+
+Junn, J., & Masuoka, N. (2008). Asian American identity: Shared racial status and political context. Perspectives on Politics, 6(4), 729-740.
+
+McClain, P. D., Johnson Carew, J. D., Walton Jr, E., & Watts, C. S. (2009). Group membership, group identity, and group consciousness: Measures of racial identity in American politics?. Annual Review of Political Science, 12, 471-485.
+
+Rogers, R., & Kim, J. Y. (2021). Rewiring Linked Fate: Bringing Back History, Agency, and Power. Perspectives on Politics, 1-14.
