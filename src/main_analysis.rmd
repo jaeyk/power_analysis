@@ -228,7 +228,9 @@ df_numeric_el_cn_wt <- df_numeric %>%
   nest_by(chinese_origin) %>%
   mutate(ols = list(tidy(lm_robust(ethnic_linked_fate ~ hate_crime_treatment, data = data, weights = weight)))) %>%
   unnest(ols)
+```
 
+```{r}
 rl_cn_wt_plot <- df_numeric_rl_cn_wt %>%
  filter(!str_detect(term, "Int")) %>%
   mutate(term = case_when(
@@ -241,6 +243,7 @@ rl_cn_wt_plot <- df_numeric_rl_cn_wt %>%
   coord_flip() +
   labs(
     title = "DV: Racial linked fate (1-5 scale)",
+    subtitle = "Weighted",
     x = "", 
     y = "Estimated ATE") +
   geom_hline(yintercept = 0, linetype = 2, color = "red") +
@@ -260,6 +263,7 @@ el_cn_wt_plot <- df_numeric_el_cn_wt %>%
   coord_flip() +
   labs(
     title = "DV: Ethnic linked fate (1-5 scale)",
+    subtitle = "Weighted",
     x = "", 
     y = "Estimated ATE") +
   geom_hline(yintercept = 0, linetype = 2, color = "red") +
