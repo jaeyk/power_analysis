@@ -244,7 +244,7 @@ rl_cn_wt_plot <- df_numeric_rl_cn_wt %>%
     x = "", 
     y = "Estimated ATE") +
   geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.3, 0.4)) +
+  ylim(c(-0.3, 0.6)) +
   geom_text_repel(aes(label = round(estimate, 2))) +
   facet_wrap(~chinese_origin)
 
@@ -263,7 +263,7 @@ el_cn_wt_plot <- df_numeric_el_cn_wt %>%
     x = "", 
     y = "Estimated ATE") +
   geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.3, 0.4)) +
+  ylim(c(-0.3, 0.6)) +
   geom_text_repel(aes(label = round(estimate, 2))) +
   facet_wrap(~chinese_origin)
 
