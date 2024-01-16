@@ -33,8 +33,34 @@ pacman::p_load(
   here,
   estimatr, 
   ggrepel,
-  modelsummary
+  modelsummary, 
+  marginaleffects,
+  tidyhte
 )
+
+custom_theme <- function(size = 13) {
+  theme_bw(base_size = size) +
+    theme(
+      aspect.ratio = 1.2,
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      axis.text.x = element_text(margin = margin(t = 6)),
+      plot.title = element_text(size = 12),
+      plot.subtitle = element_text(size = 10),
+      plot.caption = element_text(colour = "grey50", hjust = 0),
+      legend.position = "bottom"
+    )
+}
+
+ggplot2::theme_set(custom_theme())
+
+devtools::install_github("graemeblair/stdidx")
+library(stdidx)
+
+devtools::install_github("ddimmery/tidyhte")
+library(tidyhte)
 ```
 
 ```{r}
@@ -42,270 +68,257 @@ df_string <- read_csv(here("raw_data", "HARV0049_OUTPUT_strings.csv"))
 df_numeric <- read_csv(here("raw_data", "HARV0049_OUTPUT_numeric.csv"))
 ```
 
-# Linked fates  
-
-## Pooled 
-
-### Non-weighted 
+# ATE
 
 ```{r}
-rl_plot <- lm_robust(racial_linked_fate ~ factor(hate_crime_treatment), data = df_numeric) %>%
-  tidy() %>%
-  filter(!str_detect(term, "Int")) %>%
+estimate_ate <- function(dv) {
+  out <- lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df_numeric, weights = weight) %>%
+    tidy() %>%
+    filter(!str_detect(term, "Int")) %>%
+    mutate(outcome = dv)
+  
+  return(out)
+}
+
+ate_outs <- purrr::map_dfr(list("chinese_virus", "racial_linked_fate", "ethnic_linked_fate", "asian_racial_id", "asian_ethnic_id", "affirmative_action", "policy_crime"), estimate_ate) %>%
   mutate(term = case_when(
     str_detect(term, "4") ~ "Hate crime + political representation", 
     str_detect(term, "3") ~ "Hate crime + China threat", 
     str_detect(term, "2") ~ "Hate crime"
+  )) 
+```
+
+## Linked fates 
+
+```{r}
+ate_outs %>% 
+  filter(str_detect(outcome, "linked")) %>%
+  mutate(outcome = case_when(
+    str_detect(outcome, "racial") ~ "Racial linked fate", 
+    str_detect(outcome, "ethnic") ~ "Ethnic linked fate"
   )) %>%
-  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low)) +
-  geom_pointrange() +
+  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = outcome,
+             label = round(estimate, 2))) +
+  geom_pointrange(position = position_dodge(width = 0.4)) +
   coord_flip() +
   labs(
-    title = "DV: Racial linked fate (1-5 scale)",
+    title = "Linked fates",
     x = "", 
-    y = "Estimated ATE") +
+    y = "Estimated ATE",
+    col = "Outcome") +
   geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.1, 0.3)) +
-  geom_text_repel(aes(label = round(estimate, 2)))
-
-el_plot <- lm_robust(ethnic_linked_fate ~ factor(hate_crime_treatment), data = df_numeric) %>%
-  tidy() %>%
-  filter(!str_detect(term, "Int")) %>%
-  mutate(term = case_when(
-    str_detect(term, "4") ~ "Hate crime + political representation", 
-    str_detect(term, "3") ~ "Hate crime + China threat", 
-    str_detect(term, "2") ~ "Hate crime"
-  )) %>%
-  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low)) +
-  geom_pointrange() +
-  coord_flip() +
-  labs(
-    title = "DV: Ethnic linked fate (1-5 scale)",
-    x = "", 
-    y = "Estimated ATE") +
-  geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.1, 0.3)) +
-  geom_text_repel(aes(label = round(estimate, 2)))
-
-rl_plot / el_plot + plot_annotation(tag_levels =  "a")
+  scale_color_grey(start = 0.3, end = 0.7) +
+  geom_text_repel(position = position_dodge(width = 0.4)) 
 
 ggsave(here("outputs", "lf_plots.png"), 
-       height = 8, 
-       width = 6)
+       height = 6, 
+       width = 8)
 ```
 
-### Weighted 
+## Identity importance 
 
 ```{r}
-rl_plot_wt <- lm_robust(racial_linked_fate ~ factor(hate_crime_treatment), data = df_numeric, weights = weight) %>%
-  tidy() %>%
-  filter(!str_detect(term, "Int")) %>%
-  mutate(term = case_when(
-    str_detect(term, "4") ~ "Hate crime + political representation", 
-    str_detect(term, "3") ~ "Hate crime + China threat", 
-    str_detect(term, "2") ~ "Hate crime"
+ate_outs %>% 
+  filter(str_detect(outcome, "_id")) %>%
+  mutate(outcome = case_when(
+    str_detect(outcome, "racial") ~ "Racial ID importance", 
+    str_detect(outcome, "ethnic") ~ "Ethnic ID importance"
   )) %>%
-  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low)) +
-  geom_pointrange() +
+  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = outcome,
+             label = round(estimate, 2))) +
+  geom_pointrange(position = position_dodge(width = 0.4)) +
   coord_flip() +
   labs(
-    title = "DV: Racial linked fate (1-5 scale)",
-    subtitle = "Weighted",
+    title = "ID importance",
     x = "", 
-    y = "Estimated ATE") +
+    y = "Estimated ATE",
+    col = "Outcome") +
   geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.2, 0.4)) +
-  geom_text_repel(aes(label = round(estimate, 2)))
+  scale_color_grey(start = 0.3, end = 0.7) +
+  geom_text_repel(position = position_dodge(width = 0.4)) 
 
-el_plot_wt <- lm_robust(ethnic_linked_fate ~ factor(hate_crime_treatment), data = df_numeric, weights = weight) %>%
-  tidy() %>%
-  filter(!str_detect(term, "Int")) %>%
-  mutate(term = case_when(
-    str_detect(term, "4") ~ "Hate crime + political representation", 
-    str_detect(term, "3") ~ "Hate crime + China threat", 
-    str_detect(term, "2") ~ "Hate crime"
-  )) %>%
-  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low)) +
-  geom_pointrange() +
-  coord_flip() +
-  labs(
-    title = "DV: Ethnic linked fate (1-5 scale)",
-    subtitle = "Weighted",
-    x = "", 
-    y = "Estimated ATE") +
-  geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.2, 0.4)) +
-  geom_text_repel(aes(label = round(estimate, 2)))
-
-rl_plot_wt / el_plot_wt + plot_annotation(tag_levels =  "a")
-
-ggsave(here("outputs", "lf_wt_plots.png"), 
-       height = 8, 
-       width = 6)
+ggsave(here("outputs", "id_plots.png"), 
+       height = 6, 
+       width = 8)
 ```
 
-## Chinese v non-Chinese  
-
-### Non-weighted 
+## Chinese virus 
 
 ```{r}
+ate_outs %>% 
+  filter(str_detect(outcome, "_virus")) %>%
+  mutate(outcome = case_when(
+    str_detect(outcome, "chinese") ~ "Chinese virus"
+  )) %>%
+  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = outcome,
+             label = round(estimate, 2))) +
+  geom_pointrange(position = position_dodge(width = 0.4)) +
+  coord_flip() +
+  labs(
+    title = "Chinese virus",
+    x = "", 
+    y = "Estimated ATE",
+    col = "Outcome") +
+  geom_hline(yintercept = 0, linetype = 2, color = "red") +
+  scale_color_grey(start = 0.3, end = 0.7) +
+  geom_text_repel(position = position_dodge(width = 0.4)) 
+
+ggsave(here("outputs", "cv_plot.png"), 
+       height = 6, 
+       width = 8)
+```
+
+## Policy outcomes
+
+```{r}
+ate_outs %>% 
+  filter(str_detect(outcome, "action|crime")) %>%
+  mutate(outcome = case_when(
+    str_detect(outcome, "action") ~ "Affirmative action",
+    str_detect(outcome, "crime") ~ "Police funding"
+  )) %>%
+  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = outcome,
+             label = round(estimate, 2))) +
+  geom_pointrange(position = position_dodge(width = 0.4)) +
+  coord_flip() +
+  labs(
+    title = "Policy preferences",
+    x = "", 
+    y = "Estimated ATE",
+    col = "Outcome") +
+  geom_hline(yintercept = 0, linetype = 2, color = "red") +
+  scale_color_grey(start = 0.3, end = 0.7) +
+  geom_text_repel(position = position_dodge(width = 0.4)) 
+
+ggsave(here("outputs", "policy_plots.png"), 
+       height = 6, 
+       width = 8)
+```
+
+# CATE
+
+- Chinese origin 
+- China threats 
+- Democracy conception 
+
+```{r}
+# Chinese origin 
 df_numeric$chinese_origin <- ifelse(df_numeric$nat_origin == 1, "Chinese", "Non-Chinese")
 
-df_numeric_rl_cn <- df_numeric %>%
-  mutate(hate_crime_treatment = factor(hate_crime_treatment), 
-         chinese_origin = factor(chinese_origin)) %>%
-  nest_by(chinese_origin) %>%
-  mutate(ols = list(tidy(lm_robust(racial_linked_fate ~ hate_crime_treatment, data = data)))) %>%
-  unnest(ols)
+# China threat index 
+df_numeric$china_threat_index <- idx_mean(df_numeric$china_threat_1_rule, df_numeric$china_threat_2_rule, df_numeric$china_threat_3_rule)
 
-df_numeric_el_cn <- df_numeric %>%
-  mutate(hate_crime_treatment = factor(hate_crime_treatment), 
-         chinese_origin = factor(chinese_origin)) %>%
-  nest_by(chinese_origin) %>%
-  mutate(ols = list(tidy(lm_robust(ethnic_linked_fate ~ hate_crime_treatment, data = data)))) %>%
-  unnest(ols)
+df_numeric$china_threatend_high <- ifelse(df_numeric$china_threat_index > median(df_numeric$china_threat_index), "High", "Median and Low")
 
-rl_cn_plot <- df_numeric_rl_cn %>%
- filter(!str_detect(term, "Int")) %>%
-  mutate(term = case_when(
-    str_detect(term, "4") ~ "Hate crime + political representation", 
-    str_detect(term, "3") ~ "Hate crime + China threat", 
-    str_detect(term, "2") ~ "Hate crime"
-  )) %>%
-  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low)) +
-  geom_pointrange() +
-  coord_flip() +
-  labs(
-    title = "DV: Racial linked fate (1-5 scale)",
-    x = "", 
-    y = "Estimated ATE") +
-  geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.3, 0.4)) +
-  geom_text_repel(aes(label = round(estimate, 2))) +
-  facet_wrap(~chinese_origin)
+# Democracy conception
+df_numeric$democracy_meaning_1_sub <- ifelse(df_numeric$democracy_meaning_1 %in% c(2,4,6), 1, 0)
+df_numeric$democracy_meaning_2_sub <- ifelse(df_numeric$democracy_meaning_2 %in% c(2,4,6), 1, 0)  
+df_numeric$democracy_meaning_3_sub <- ifelse(df_numeric$democracy_meaning_3 %in% c(2,4,6), 1, 0)  
+df_numeric$democracy_sub <- df_numeric$democracy_meaning_1_sub + df_numeric$democracy_meaning_2_sub + df_numeric$democracy_meaning_3_sub
 
-el_cn_plot <- df_numeric_el_cn %>%
- filter(!str_detect(term, "Int")) %>%
-  mutate(term = case_when(
-    str_detect(term, "4") ~ "Hate crime + political representation", 
-    str_detect(term, "3") ~ "Hate crime + China threat", 
-    str_detect(term, "2") ~ "Hate crime"
-  )) %>%
-  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low)) +
-  geom_pointrange() +
-  coord_flip() +
-  labs(
-    title = "DV: Ethnic linked fate (1-5 scale)",
-    x = "", 
-    y = "Estimated ATE") +
-  geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.3, 0.4)) +
-  geom_text_repel(aes(label = round(estimate, 2))) +
-  facet_wrap(~chinese_origin)
+df_numeric$democracy_cat <- ifelse(df_numeric$democracy_sub == 0, "Procedural", "Substantial")
 
-rl_cn_plot / el_cn_plot + plot_annotation(tag_levels =  "a")
+ols <- function(df, dv) { 
+  
+  lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df, weights = weight) %>%
+    tidy() %>%
+    filter(!str_detect(term, "Int")) %>%
+    mutate(outcome = dv)
+  
+}
 
-ggsave(here("outputs", "lf_cn_plots.png"), 
-       height = 8, 
-       width = 6)
-```
-
-### Weighted 
-
-```{r}
-df_numeric$chinese_origin <- ifelse(df_numeric$nat_origin == 1, "Chinese", "Non-Chinese")
-
-df_numeric_rl_cn_wt <- df_numeric %>%
-  mutate(hate_crime_treatment = factor(hate_crime_treatment), 
-         chinese_origin = factor(chinese_origin)) %>%
-  nest_by(chinese_origin) %>%
-  mutate(ols = list(tidy(lm_robust(racial_linked_fate ~ hate_crime_treatment, data = data, weights = weight)))) %>%
-  unnest(ols)
-
-df_numeric_el_cn_wt <- df_numeric %>%
-  mutate(hate_crime_treatment = factor(hate_crime_treatment), 
-         chinese_origin = factor(chinese_origin)) %>%
-  nest_by(chinese_origin) %>%
-  mutate(ols = list(tidy(lm_robust(ethnic_linked_fate ~ hate_crime_treatment, data = data, weights = weight)))) %>%
-  unnest(ols)
+nest_ols <- function(df, dv) {
+  
+  df %>%
+    nest() %>%
+    mutate(ols = map(data, ~ols(., dv))) %>%
+    unnest(ols) %>% 
+    mutate(term = case_when(
+      str_detect(term, "4") ~ "Hate crime + political representation", 
+      str_detect(term, "3") ~ "Hate crime + China threat", 
+      str_detect(term, "2") ~ "Hate crime"
+    )) %>%
+    mutate(outcome = case_when(
+      str_detect(outcome, "racial") ~ "Racial linked fate", 
+      str_detect(outcome, "ethnic") ~ "Ethnic linked fate"
+    ))  
+}
 ```
 
 ```{r}
-rl_cn_wt_plot <- df_numeric_rl_cn_wt %>%
- filter(!str_detect(term, "Int")) %>%
-  mutate(term = case_when(
-    str_detect(term, "4") ~ "Hate crime + political representation", 
-    str_detect(term, "3") ~ "Hate crime + China threat", 
-    str_detect(term, "2") ~ "Hate crime"
-  )) %>%
-  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low)) +
-  geom_pointrange() +
+chinese_cate_plot <- bind_rows(
+  df_numeric %>%
+    group_by(chinese_origin) %>%
+    nest_ols("racial_linked_fate"),
+  df_numeric %>%
+    group_by(chinese_origin) %>%
+    nest_ols("ethnic_linked_fate")
+  ) %>%
+  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = chinese_origin,
+             label = round(estimate, 2))) +
+  geom_pointrange(position = position_dodge(width = 0.2)) +
   coord_flip() +
   labs(
-    title = "DV: Racial linked fate (1-5 scale)",
-    subtitle = "Weighted",
+    title = "Chinese v Non-Chinese",
     x = "", 
-    y = "Estimated ATE") +
+    y = "Estimated ATE",
+    col = "Subgroup") +
   geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.3, 0.6)) +
-  geom_text_repel(aes(label = round(estimate, 2))) +
-  facet_wrap(~chinese_origin)
+  scale_color_grey(start = 0.3, end = 0.7) +
+  geom_text_repel(position = position_dodge(width = 0.2)) +
+  theme(legend.position = "right") +
+  facet_wrap(~outcome)
 
-el_cn_wt_plot <- df_numeric_el_cn_wt %>%
- filter(!str_detect(term, "Int")) %>%
-  mutate(term = case_when(
-    str_detect(term, "4") ~ "Hate crime + political representation", 
-    str_detect(term, "3") ~ "Hate crime + China threat", 
-    str_detect(term, "2") ~ "Hate crime"
-  )) %>%
-  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low)) +
-  geom_pointrange() +
+china_threat_perc_plot <- bind_rows(
+  df_numeric %>%
+    group_by(china_threatend_high) %>%
+    nest_ols("racial_linked_fate"),
+  df_numeric %>%
+    group_by(china_threatend_high) %>%
+    nest_ols("ethnic_linked_fate")
+  ) %>%
+  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = china_threatend_high,
+             label = round(estimate, 2))) +
+  geom_pointrange(position = position_dodge(width = 0.2)) +
   coord_flip() +
   labs(
-    title = "DV: Ethnic linked fate (1-5 scale)",
-    subtitle = "Weighted",
+    title = "Perceived China threat",
     x = "", 
-    y = "Estimated ATE") +
+    y = "Estimated ATE",
+    col = "Subgroup") +
   geom_hline(yintercept = 0, linetype = 2, color = "red") +
-  ylim(c(-0.3, 0.6)) +
-  geom_text_repel(aes(label = round(estimate, 2))) +
-  facet_wrap(~chinese_origin)
+  scale_color_grey(start = 0.3, end = 0.7) +
+  geom_text_repel(position = position_dodge(width = 0.2)) +
+  theme(legend.position = "right") +
+  facet_wrap(~outcome)
 
-rl_cn_wt_plot / el_cn_wt_plot + plot_annotation(tag_levels =  "a")
+dem_perc_plot <- bind_rows(
+  df_numeric %>%
+    group_by(democracy_cat) %>%
+    nest_ols("racial_linked_fate"),
+  df_numeric %>%
+    group_by(democracy_cat) %>%
+    nest_ols("ethnic_linked_fate")
+  ) %>%
+  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = democracy_cat,
+             label = round(estimate, 2))) +
+  geom_pointrange(position = position_dodge(width = 0.2)) +
+  coord_flip() +
+  labs(
+    title = "Democracy perception",
+    x = "", 
+    y = "Estimated ATE",
+    col = "Subgroup") +
+  geom_hline(yintercept = 0, linetype = 2, color = "red") +
+  scale_color_grey(start = 0.3, end = 0.7) +
+  geom_text_repel(position = position_dodge(width = 0.2)) +
+  theme(legend.position = "right") +
+  facet_wrap(~outcome)
 
-ggsave(here("outputs", "lf_cn_wt_plots.png"), 
-       height = 8, 
-       width = 6)
+cate_rl_plots <- chinese_cate_plot / china_threat_perc_plot / dem_perc_plot + plot_annotation(tag_levels = "a")
+
+ggsave(plot = cate_rl_plots, 
+       filename = here("outputs", "cate_rl_plots.png"), 
+       height = 12, 
+       width = 10)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
