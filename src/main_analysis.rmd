@@ -218,7 +218,7 @@ df_numeric$china_threat_index <- idx_mean(df_numeric$china_threat_1_rule, df_num
 df_numeric$china_threatend_high <- ifelse(df_numeric$china_threat_index > median(df_numeric$china_threat_index), "High", "Median and Low")
 
 # Democracy conception
-df_numeric$democracy_sub <- idx_mean(df_numeric$democracy_meaning_2 + df_numeric$democracy_meaning_2 + df_numeric$democracy_meaning_3)
+df_numeric$democracy_sub <- idx_mean(df_numeric$democracy_meaning_1 + df_numeric$democracy_meaning_2 + df_numeric$democracy_meaning_3)
 
 df_numeric$democracy_cat <- ifelse(df_numeric$democracy_sub > median(df_numeric$democracy_sub), "High", "Median and Low")
 
@@ -430,7 +430,7 @@ dem_pec_plot <- results %>%
   scale_x_discrete("Covariate level") +
   scale_y_continuous("Estimated CATE") +
   labs(col = "Subgroup",
-       title = "Marginal effects across democracy perception") +
+       title = "Marginal effects across substantive democracy perception") +
   coord_flip() +
   scale_color_grey(start = 0.3, end = 0.7)
 
