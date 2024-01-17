@@ -58,7 +58,7 @@ df_numeric <- read_csv(here("raw_data", "HARV0049_OUTPUT_numeric.csv"))
 
 ```{r}
 estimate_ate <- function(dv) {
-  out <- lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df_numeric, weights = weight) %>%
+  out <- lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df_numeric) %>%
     tidy() %>%
     filter(!str_detect(term, "Int")) %>%
     mutate(outcome = dv)
@@ -159,15 +159,14 @@ ate_outs %>%
   mutate(outcome = case_when(
     str_detect(outcome, "chinese") ~ "Chinese virus"
   )) %>%
-  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = outcome,
+  ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low,
              label = round(estimate, 2))) +
   geom_pointrange(position = position_dodge(width = 0.4)) +
   coord_flip() +
   labs(
     title = "Chinese virus",
     x = "", 
-    y = "Estimated ATE",
-    col = "Outcome") +
+    y = "Estimated ATE") +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed")  +
   scale_color_grey(start = 0.3, end = 0.7) +
   geom_text_repel(position = position_dodge(width = 0.4)) 
@@ -240,7 +239,7 @@ df_numeric$college <- ifelse(df_numeric$educ %in% c(3:6), "College", "Non-colleg
 ```{r}
 ols <- function(df, dv) { 
   
-  lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df, weights = weight) %>%
+  lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df) %>%
     tidy() %>%
     filter(!str_detect(term, "Int")) %>%
     mutate(outcome = dv)
