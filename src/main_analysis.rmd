@@ -49,9 +49,7 @@ if (!require(tidyhte)) devtools::install_github("ddimmery/tidyhte")
 library(tidyhte)
 
 source(here("functions", "utils.R"))
-```
 
-```{r}
 df_string <- read_csv(here("raw_data", "HARV0049_OUTPUT_strings.csv"))
 df_numeric <- read_csv(here("raw_data", "HARV0049_OUTPUT_numeric.csv"))
 ```
@@ -231,6 +229,15 @@ df_numeric$GOP <- ifelse(df_numeric$pid3 == 3 | df_numeric$pid7 %in% c(7, 5), "G
 ```
 
 ```{r}
+# Immigrant
+df_numeric$immigrant <- ifelse(df_numeric$immigrant %in% c(1, 2), "Immigrant", "Non-immigrant")
+```
+
+```{r}
+df_numeric$college <- ifelse(df_numeric$educ %in% c(3:6), "College", "Non-college")
+```
+
+```{r}
 ols <- function(df, dv) { 
   
   lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df, weights = weight) %>%
@@ -376,6 +383,14 @@ el_results <- reduce(list(
 results <- bind_rows(rl_results, el_results)
 ```
 
+## Load 
+
+```{r}
+write_csv(results, here("processed_data", "cate_results.csv"))
+```
+
+## Pre-registered
+
 ```{r}
 #chinese_origin, democracy_cat, china_threatend_high, DEM, GOP
 
@@ -397,7 +412,7 @@ cn_origin_plot <- results %>%
   labs(col = "Subgroup",
        title = "Marginal effects across Chinese dummy") +
   coord_flip() +
-  scale_fill_grey(start = 0.3, end = 0.7)
+  scale_color_grey(start = 0.3, end = 0.7)
 
 dem_pec_plot <- results %>%
   filter(estimand == "MCATE") %>%
@@ -416,8 +431,8 @@ dem_pec_plot <- results %>%
   scale_y_continuous("Estimated CATE") +
   labs(col = "Subgroup",
        title = "Marginal effects across democracy perception") +
-  coord_flip()+
-  scale_fill_grey(start = 0.3, end = 0.7)
+  coord_flip() +
+  scale_color_grey(start = 0.3, end = 0.7)
 
 cn_threat_plot <- results %>%
   filter(estimand == "MCATE") %>%
@@ -436,9 +451,11 @@ cn_threat_plot <- results %>%
   scale_y_continuous("Estimated CATE") +
   labs(col = "Subgroup",
        title = "Marginal effects across perceived China threat") +
-  coord_flip()+
-  scale_fill_grey(start = 0.3, end = 0.7)
+  coord_flip() +
+  scale_color_grey(start = 0.3, end = 0.7)
 ```
+
+## Non-registered
 
 ```{r}
 dem_plot <- results %>%
@@ -480,9 +497,53 @@ gop_plot <- results %>%
   scale_y_continuous("Estimated CATE") +
   labs(col = "Subgroup",
        title = "Marginal effects across GOP party ID") +
-  scale_color_manual(values = c("red", "black")) +
+  scale_color_grey(start = 0.3, end = 0.7) +
   coord_flip()
 ```
+
+```{r}
+immigrant_plot <- results %>%
+  filter(estimand == "MCATE") %>%
+  filter(term == "immigrant") %>%
+   ggplot(aes(x = treatment, 
+             y = estimate, 
+             ymin = estimate - 1.96 * std_error,
+             ymax = estimate + 1.96 * std_error,
+             col = level,
+             label = round(estimate, 2))) +
+  geom_text_repel(position = position_dodge(width = 0.2)) +
+  facet_wrap(~outcome) +
+  geom_pointrange(position = position_dodge(width = 0.2)) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+  scale_x_discrete("Covariate level") +
+  scale_y_continuous("Estimated CATE") +
+  labs(col = "Subgroup",
+       title = "Marginal effects across immigrant status") +
+  scale_color_grey(start = 0.3, end = 0.7) +
+  coord_flip()
+
+college_plot <- results %>%
+  filter(estimand == "MCATE") %>%
+  filter(term == "college") %>%
+   ggplot(aes(x = treatment, 
+             y = estimate, 
+             ymin = estimate - 1.96 * std_error,
+             ymax = estimate + 1.96 * std_error,
+             col = level,
+             label = round(estimate, 2))) +
+  geom_text_repel(position = position_dodge(width = 0.2)) +
+  facet_wrap(~outcome) +
+  geom_pointrange(position = position_dodge(width = 0.2)) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+  scale_x_discrete("Covariate level") +
+  scale_y_continuous("Estimated CATE") +
+  labs(col = "Subgroup",
+       title = "Marginal effects across college education status") +
+  scale_color_grey(start = 0.3, end = 0.7) +
+  coord_flip()
+```
+
+## Save
 
 ```{r}
 hte_plots <- cn_origin_plot / cn_threat_plot / dem_pec_plot + plot_annotation(tag_levels = "a")
@@ -508,6 +569,20 @@ png(filename = here("outputs", "hte_plots_pid.png"),
     res = 1200)
 
 hte_plots_pid
+
+dev.off()
+```
+
+```{r}
+hte_plots_others <- immigrant_plot / college_plot + plot_annotation(tag_levels = "a")
+
+png(filename = here("outputs", "hte_plots_others.png"), 
+    height = 12, 
+    width = 10, 
+    unit = "in", 
+    res = 1200)
+
+hte_plots_others
 
 dev.off()
 ```
