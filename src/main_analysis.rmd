@@ -386,6 +386,8 @@ results <- bind_rows(rl_results, el_results)
 
 ```{r}
 write_csv(results, here("processed_data", "cate_results.csv"))
+
+results <- read_csv(here("processed_data", "cate_results.csv"))
 ```
 
 ## Pre-registered
@@ -457,10 +459,11 @@ cn_threat_plot <- results %>%
 ## Non-registered
 
 ```{r}
-dem_plot <- results %>%
+pid_plot <- results %>%
   filter(estimand == "MCATE") %>%
-  filter(term == "DEM") %>%
-   ggplot(aes(x = treatment, 
+  filter(term %in% c("DEM", "GOP")) %>%
+  filter(!str_detect(level, "Non")) %>%
+  ggplot(aes(x = treatment, 
              y = estimate, 
              ymin = estimate - 1.96 * std_error,
              ymax = estimate + 1.96 * std_error,
@@ -472,39 +475,18 @@ dem_plot <- results %>%
   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
   scale_x_discrete("Covariate level") +
   scale_y_continuous("Estimated CATE") +
-  scale_color_manual(values = c("blue", "black")) +
+  scale_color_manual(values = c("blue", "red")) +
   labs(col = "Subgroup",
-       title = "Marginal effects across Democratic party ID") +
-  coord_flip()
-```
-
-```{r}
-gop_plot <- results %>%
-  filter(estimand == "MCATE") %>%
-  filter(term == "GOP") %>%
-   ggplot(aes(x = treatment, 
-             y = estimate, 
-             ymin = estimate - 1.96 * std_error,
-             ymax = estimate + 1.96 * std_error,
-             col = level,
-             label = round(estimate, 2))) +
-  geom_text_repel(position = position_dodge(width = 0.2)) +
-  facet_wrap(~outcome) +
-  geom_pointrange(position = position_dodge(width = 0.2)) +
-  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
-  scale_x_discrete("Covariate level") +
-  scale_y_continuous("Estimated CATE") +
-  labs(col = "Subgroup",
-       title = "Marginal effects across GOP party ID") +
-  scale_color_grey(start = 0.3, end = 0.7) +
-  coord_flip()
+       title = "Marginal effects across party ID") +
+  coord_flip() +
+  theme(legend.position = "bottom")
 ```
 
 ```{r}
 immigrant_plot <- results %>%
   filter(estimand == "MCATE") %>%
   filter(term == "immigrant") %>%
-   ggplot(aes(x = treatment, 
+  ggplot(aes(x = treatment, 
              y = estimate, 
              ymin = estimate - 1.96 * std_error,
              ymax = estimate + 1.96 * std_error,
@@ -519,12 +501,13 @@ immigrant_plot <- results %>%
   labs(col = "Subgroup",
        title = "Marginal effects across immigrant status") +
   scale_color_grey(start = 0.3, end = 0.7) +
-  coord_flip()
+  coord_flip() +
+  theme(legend.position = "bottom")
 
 college_plot <- results %>%
   filter(estimand == "MCATE") %>%
   filter(term == "college") %>%
-   ggplot(aes(x = treatment, 
+  ggplot(aes(x = treatment, 
              y = estimate, 
              ymin = estimate - 1.96 * std_error,
              ymax = estimate + 1.96 * std_error,
@@ -539,7 +522,43 @@ college_plot <- results %>%
   labs(col = "Subgroup",
        title = "Marginal effects across college education status") +
   scale_color_grey(start = 0.3, end = 0.7) +
-  coord_flip()
+  coord_flip() +
+  theme(legend.position = "bottom")
+```
+
+## Pooled 
+
+```{r}
+results_pooled <- results %>%
+  filter(estimand == "MCATE")
+
+results_pooled$level[results_pooled$term == "democracy_cat"] <- rep(c("Median and low democracy perception", "High democracy perception"), 6)
+
+results_pooled$level[results_pooled$term == "china_threatend_high"] <- rep(c("Median and low China threat perception", "High China threat perception"), 6)
+```
+
+```{r}
+pooled_cate_plot <- results_pooled %>%
+  filter(!str_detect(level, "Non-G|Non-D")) %>%
+  mutate(significant = ifelse(estimate - 1.96 * std_error > 0, "Significant", "Non-significant")) %>%
+  ggplot(aes(x = fct_reorder(level, estimate), 
+             y = estimate,
+             ymin = estimate - 1.96 * std_error,
+             ymax = estimate + 1.96 * std_error,
+             label = round(estimate, 2), 
+             col = significant)) +
+  geom_pointrange(position = position_dodge(width = 0.2)) +
+  geom_text_repel(position = position_dodge(width = 0.2)) +
+  coord_flip() +
+  facet_grid(outcome~treatment) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+  labs(x = "",
+       y = "Estimated CATE",
+       col = "Statistical significance") +
+  theme(legend.position = "bottom") +
+  scale_color_grey(start = 0.7, end = 0.3) 
+
+pooled_cate_plot
 ```
 
 ## Save
@@ -559,15 +578,13 @@ dev.off()
 ```
 
 ```{r}
-hte_plots_pid <- dem_plot / gop_plot + plot_annotation(tag_levels = "a")
-
 png(filename = here("outputs", "hte_plots_pid.png"), 
-    height = 12, 
-    width = 10, 
+    height = 6, 
+    width = 6, 
     unit = "in", 
     res = 1200)
 
-hte_plots_pid
+pid_plot 
 
 dev.off()
 ```
@@ -582,6 +599,18 @@ png(filename = here("outputs", "hte_plots_others.png"),
     res = 1200)
 
 hte_plots_others
+
+dev.off()
+```
+
+```{r}
+png(filename = here("outputs", "pooled_cate_plot.png"), 
+    height = 12, 
+    width = 10, 
+    unit = "in", 
+    res = 1200)
+
+pooled_cate_plot
 
 dev.off()
 ```
