@@ -54,6 +54,30 @@ df_string <- read_csv(here("raw_data", "HARV0049_OUTPUT_strings.csv"))
 df_numeric <- read_csv(here("raw_data", "HARV0049_OUTPUT_numeric.csv"))
 ```
 
+# Data summary 
+
+## Categorical 
+
+```{r}
+datasummary_skim(df_string %>%
+                   select(nat_origin, immigrant), 
+                 type = "categorical",
+                 output = here("outputs", "cat_data_summary.docx"))
+```
+
+## Numeric 
+
+```{r}
+df_num_sumamry <- create_dummies(df_numeric) %>%
+  select(chinese_origin, immigrant, DEM, GOP, college, female, age)
+
+df_num_sumamry$hate_crime_treatment <- df_string$hate_crime_treatment
+
+datasummary(All(df_num_sumamry) ~ hate_crime_treatment * (Mean),
+            data = df_num_sumamry, 
+            output = here("outputs", "balance.docx"))
+```
+
 # ATE
 
 ```{r}
@@ -211,6 +235,22 @@ ggsave(here("outputs", "policy_plots.png"),
 # Chinese origin 
 df_numeric$chinese_origin <- ifelse(df_numeric$nat_origin == 1, "Chinese", "Non-Chinese")
 
+# Party ID
+df_numeric$DEM <- ifelse(df_numeric$pid3 == 1 | df_numeric$pid7 %in% c(1, 3), "DEM", "Non-DEM")
+
+df_numeric$GOP <- ifelse(df_numeric$pid3 == 3 | df_numeric$pid7 %in% c(7, 5), "GOP", "Non-GOP")
+
+# Immigrant
+df_numeric$immigrant <- ifelse(df_numeric$immigrant %in% c(1, 2), "Immigrant", "Non-immigrant")
+
+# College
+df_numeric$college <- ifelse(df_numeric$educ %in% c(3:6), "College", "Non-college")
+
+# Male
+df_numeric$female <- ifelse(df_numeric$gender4 == 2, "Female", "Else")
+```
+
+```{r}
 # China threat index 
 df_numeric$china_threat_index <- idx_mean(df_numeric$china_threat_1_rule, df_numeric$china_threat_2_rule, df_numeric$china_threat_3_rule)
 
@@ -220,20 +260,6 @@ df_numeric$china_threatend_high <- ifelse(df_numeric$china_threat_index > median
 df_numeric$democracy_sub <- idx_mean(df_numeric$democracy_meaning_1 + df_numeric$democracy_meaning_2 + df_numeric$democracy_meaning_3)
 
 df_numeric$democracy_cat <- ifelse(df_numeric$democracy_sub > median(df_numeric$democracy_sub), "High", "Median and Low")
-
-# Party ID
-df_numeric$DEM <- ifelse(df_numeric$pid3 == 1 | df_numeric$pid7 %in% c(1, 3), "DEM", "Non-DEM")
-
-df_numeric$GOP <- ifelse(df_numeric$pid3 == 3 | df_numeric$pid7 %in% c(7, 5), "GOP", "Non-GOP")
-```
-
-```{r}
-# Immigrant
-df_numeric$immigrant <- ifelse(df_numeric$immigrant %in% c(1, 2), "Immigrant", "Non-immigrant")
-```
-
-```{r}
-df_numeric$college <- ifelse(df_numeric$educ %in% c(3:6), "College", "Non-college")
 ```
 
 ```{r}
@@ -613,4 +639,10 @@ png(filename = here("outputs", "pooled_cate_plot.png"),
 pooled_cate_plot
 
 dev.off()
+```
+
+# Open-ended texts
+
+```{r}
+df_string$
 ```

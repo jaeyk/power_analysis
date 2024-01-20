@@ -52,6 +52,33 @@ get_db_rl_estimates <- function(treated_n) {
   return(results)
 }
 
+create_dummies <- function(df_numeric) {
+  
+  df_copy <- df_numeric
+  
+  # Chinese origin 
+  df_copy$chinese_origin <- ifelse(df_copy$nat_origin == 1, 1, 0)
+  
+  # Party ID
+  df_copy$DEM <- ifelse(df_copy$pid3 == 1 | df_copy$pid7 %in% c(1, 3), 1, 0)
+  
+  df_copy$GOP <- ifelse(df_copy$pid3 == 3 | df_copy$pid7 %in% c(7, 5), 1, 0)
+  
+  # Immigrant
+  df_copy$immigrant <- ifelse(df_copy$immigrant %in% c(1, 2), 1, 0)
+  
+  # College
+  df_copy$college <- ifelse(df_copy$educ %in% c(3:6), 1, 0)
+  
+  # Male
+  df_copy$female <- ifelse(df_copy$gender4 == 2, 1, 0)
+  
+  # Age
+  df_copy$age <- 2024 - df_copy$birthyr
+  
+  return(df_copy)
+  
+}
 
 get_db_el_estimates <- function(treated_n) {
   
