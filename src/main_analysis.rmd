@@ -37,7 +37,13 @@ pacman::p_load(
   marginaleffects,
   tidyhte, 
   fixest,
-  glmnet
+  glmnet,
+  # text analysis
+  tidytext,
+  readtext,
+  quanteda, 
+  keyATM,
+  stm
 )
 
 ggplot2::theme_set(theme_minimal())
@@ -50,8 +56,12 @@ library(tidyhte)
 
 source(here("functions", "utils.R"))
 
+# raw data
 df_string <- read_csv(here("raw_data", "HARV0049_OUTPUT_strings.csv"))
 df_numeric <- read_csv(here("raw_data", "HARV0049_OUTPUT_numeric.csv"))
+
+# processed data (content analysis)
+coded_text <- read_csv(here("processed_data", "coded_text_JYK.csv"))
 ```
 
 # Data summary 
@@ -73,7 +83,7 @@ df_num_sumamry <- create_dummies(df_numeric) %>%
 
 df_num_sumamry$hate_crime_treatment <- df_string$hate_crime_treatment
 
-datasummary(All(df_num_sumamry) ~ hate_crime_treatment * (Mean),
+datasummary(All(df_num_sumamry) ~ hate_crime_treatment * (mean_no_na + std_no_na),
             data = df_num_sumamry, 
             output = here("outputs", "balance.docx"))
 ```
@@ -643,6 +653,246 @@ dev.off()
 
 # Open-ended texts
 
+## Descriptive statitics 
+
 ```{r}
-df_string$
+my_stop_words <- bind_rows(stop_words, 
+                           tibble(word = c("asian", "asians", "american", "americans"),
+                                  lexicon = rep("custom", 4)))
+
+# succeed, fail are frequent words
+
+df_string %>%
+  unnest_tokens(word, asian_open_ended_question) %>%
+  anti_join(my_stop_words) %>%
+  count(hate_crime_treatment, word, sort = TRUE) %>%
+  head(n = 30) 
+
+df_string_word_pct <- df_string %>%
+  mutate(succeed = ifelse(str_detect(tolower(asian_open_ended_question), "succeed"), 1, 0)) %>%
+  mutate(fail = ifelse(str_detect(tolower(asian_open_ended_question), "fail"), 1, 0)) %>%
+  select(hate_crime_treatment, succeed, fail)
+
+datasummary(All(df_string_word_pct) ~ hate_crime_treatment * (mean_no_na + std_no_na),
+            data = df_string_word_pct,
+            output = here("outputs", "balance_word_pct.docx"))
+```
+
+## Content analysis
+
+```{r}
+coded_text <- coded_text %>%
+  mutate(unsure = ifelse(is.na(asian_open_ended_question), NA, unsure))
+
+coded_text <- coded_text %>%
+  replace_na(list(unsure = 0, succeed = 0, fail = 0, contingent = 0, misread = 0)) %>%
+  mutate(validate = unsure + succeed + fail + contingent + misread) 
+
+coded_text %>%
+  filter(validate > 1) # this should be zero
+```
+
+```{r}
+coded_text %>%
+  filter(!is.na(asian_open_ended_question)) %>% # n = 1,878, 94% response rate 
+  filter(misread == 0) %>%
+  pull(fail) %>%
+  mean()
+
+coded_text %>%
+  filter(!is.na(asian_open_ended_question)) %>% # n = 1,878, 94% response rate 
+  filter(misread == 0) %>% # n = 1,636
+  group_by(hate_crime_treatment) %>%
+  summarize(unsure_rate = mean(unsure), 
+            succeed_rate = mean(succeed), 
+            fail_rate = mean(fail), 
+            contingnet_rate = mean(contingent)) %>%
+  pivot_longer(matches("rate")) %>%
+  mutate(name = case_when(
+    str_detect(name, "unsure") ~ "Unsure", 
+    str_detect(name, "succeed") ~ "Succeed",
+    str_detect(name, "fail") ~ "Fail",
+    str_detect(name, "conti") ~ "Contingent"
+  )) %>%
+  ggplot(aes(x = hate_crime_treatment, y = value)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = value - 1.96 * sd(value) / sqrt(length(value)),
+                    ymax = value + 1.96 * sd(value) / sqrt(length(value))),
+                position = position_dodge(width = 0.4)) +
+  geom_text(aes(label = paste0(round(value, 2)*100, "%")), nudge_y = 0.12) +
+  facet_wrap(~name) +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "", 
+       y = "Proportion of the responses",
+       title = "Content analysis of open-ended responses",
+       subtitle = "Excluding non- and misread-responses (n = 1,636)")
+
+ggsave(here("outputs", "content_analysis.png"))
+```
+
+## keyATM
+
+### Preprocess
+
+```{r}
+corpus <- coded_text %>%
+  filter(!is.na(asian_open_ended_question)) %>% # n = 1,878, 94% response rate 
+  filter(misread == 0) %>% # n = 1,636
+  filter(fail == 1) %>%
+  mutate(text = clean_text(asian_open_ended_question))
+```
+
+```{r}
+key_corpus <- quanteda::corpus(corpus$text)
+
+docvars(key_corpus, "hate_crime_treatment") <- corpus$hate_crime_treatment
+```
+
+```{r}
+# Tokenize 
+data_tokens <- tokens(key_corpus) 
+```
+
+### Document-term matrix
+
+```{r}
+data_dfm <- dfm(data_tokens) 
+```
+
+### KeyATM
+
+```{r}
+keyATM_docs <- keyATM_read(texts = data_dfm)
+
+keywords <- list(
+    
+    "diverisy" = c("language", "culture", "history", "generation", "east", "south", "chinese", "indian", "japanese", "filipino", "korean", "class", "privilege", "agenda", "competition", "fight", "internal"),
+    
+    "political_agency" = c("assert", "voice", "silent", "stay", "vote", "participate", "leader"),
+    
+    "outside_support" = c("support", "resource", "media", "funding", "government", "white")
+    
+    )
+
+key_viz <- visualize_keywords(docs = keyATM_docs, 
+                              keywords = keywords)
+
+key_viz
+
+save_fig(key_viz, here("outputs", "keyword.png")) 
+```
+
+```{r}
+# run many models 
+many_models <- tibble(K = c(3:5)) %>%
+               mutate(topic_model = map(K, ~stm(data_dfm, K = .)))
+
+write_rds(many_models, here("outputs", "many_models.rds"))
+
+#many_models <- read_rds(here("outputs", "many_models.rds"))
+```
+
+```{r}
+k_search_diag <- visualize_diag(data_dfm, many_models)
+
+ggsave(here("outputs", "k_search_diag.png"))
+```
+
+#### Static topic modeling 
+
+```{r}
+set.seed(1234)
+
+out <- keyATM(docs = keyATM_docs,       # text input
+              no_keyword_topics = 1,    # number of topics without keywords
+              keywords = keywords,      # keywords
+              model = "base",           # select the model
+              options = list(seed = 250,
+              store_theta = TRUE))
+
+write_rds(out, here("outputs", "keyATM_out.rds"))
+
+#out <- read_rds(here("outputs", "keyATM_out.rds"))
+
+# theta = document-topic distribution 
+out$theta <- round(out$theta, 0)
+
+# sum 
+sums <- c(sum(out$theta[,1]), sum(out$theta[,2]), sum(out$theta[,3]))
+```
+
+```{r}
+topic_out <- tibble(topic_sums = sums,
+                    names = c("Diversity", "Political agency", "Outside support")) %>%  
+           mutate(prop = topic_sums / sum(topic_sums),
+           prop = round(prop, 2))
+
+topic_out %>% 
+    ggplot(aes(x = fct_reorder(names, prop), y = prop)) +
+    geom_col(position = "dodge") +
+    scale_y_continuous(labels =    
+    scales::percent_format(accuracy = 1)) +
+    labs(x = "Topic name", 
+         y = "Topic proportion",          
+         title = "Topic-document distributions",
+        subtitle = "Responses mentioned the reasons on why Asian Americans would fail to unite (n = 806)") +
+   geom_text(aes(label = paste0(round(prop, 2)*100, "%")), nudge_y = 0.05) 
+
+ggsave(here("outputs", "topic_modeling_static.png"))
+```
+
+#### Covariate topic modeling 
+
+```{r}
+# Extract covariates 
+vars <- docvars(key_corpus)
+
+vars_selected <- vars %>%
+  select(hate_crime_treatment) %>%
+  mutate(treatment = factor(hate_crime_treatment))
+
+# Topic modeling 
+covariate_out <- keyATM(docs = keyATM_docs,       # text input
+              no_keyword_topics = 1,    # number of topics without keywords
+              keywords = keywords,      # keywords
+              model = "covariates",           # select the model
+              model_settings = list(covariates_data = vars_selected,
+                                    covariates_formula = ~ treatment),
+              options = list(seed = 250, store_theta = TRUE))
+
+covariates_info(covariate_out)
+```
+
+```{r}
+# Predicted mean of the document-term distribution for intervention 
+strata_topic_t1 <- by_strata_DocTopic(covariate_out, by_var = "treatmentHate Crime",
+                                   labels = c("Control", "Hate Crime"))
+
+strata_topic_t2 <- by_strata_DocTopic(covariate_out, by_var = "treatmentHate Crime + China Threat",
+                                   labels = c("Control", "Hate Crime + China threat"))
+
+strata_topic_t3 <- by_strata_DocTopic(covariate_out, by_var = "treatmentHate Crime + Political Representation",
+                                   labels = c("Control", "Hate Crime + Political representation"))
+```
+
+```{r}
+reduce(list(strata_topic_t1$tables$`Hate Crime`,
+strata_topic_t2$tables$`Hate Crime + China threat`,
+strata_topic_t3$tables$`Hate Crime + Political representation`), 
+  bind_rows) %>%
+  filter(TopicID != 4) %>%
+  rename(Label = label) %>%
+  ggplot(aes(x = Label, 
+             y = Point, 
+             ymin = Lower, 
+             ymax = Upper,
+             label = round(Point, 2))) +
+  geom_pointrange() +
+  facet_wrap(~Topic) +
+  coord_flip() +
+  geom_text(nudge_x = 0.1) +
+  labs(x = "", y = "Marginal posterior mean of document-topic distribution")
+
+ggsave(here("outputs", "covariate_topic_modeling.png"))
 ```
