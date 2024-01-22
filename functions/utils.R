@@ -1,5 +1,32 @@
 
+ols <- function(df, dv) { 
+  
+  lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df) %>%
+    tidy() %>%
+    filter(!str_detect(term, "Int")) %>%
+    mutate(outcome = dv)
+  
+}
+
+nest_ols <- function(df, dv) {
+  
+  df %>%
+    nest() %>%
+    mutate(ols = map(data, ~ols(., dv))) %>%
+    unnest(ols) %>% 
+    mutate(term = case_when(
+      str_detect(term, "4") ~ "Hate crime + political representation", 
+      str_detect(term, "3") ~ "Hate crime + China threat", 
+      str_detect(term, "2") ~ "Hate crime"
+    )) %>%
+    mutate(outcome = case_when(
+      str_detect(outcome, "racial") ~ "Racial linked fate", 
+      str_detect(outcome, "ethnic") ~ "Ethnic linked fate"
+    ))  
+}
+
 mean_no_na <- function(x) mean(x, na.rm = T)
+
 std_no_na <- function(x) sd(x, na.rm = T)/sqrt(length(x))
 
 get_db_rl_estimates <- function(treated_n) {
@@ -71,7 +98,7 @@ create_dummies <- function(df_numeric) {
   df_copy$immigrant <- ifelse(df_copy$immigrant %in% c(1, 2), 1, 0)
   
   # College
-  df_copy$college <- ifelse(df_copy$educ %in% c(3:6), 1, 0)
+  df_copy$college <- ifelse(df_copy$educ %in% c(5:6), 1, 0)
   
   # Male
   df_copy$female <- ifelse(df_copy$gender4 == 2, 1, 0)
@@ -379,5 +406,14 @@ visualize_diag <- function(sparse_matrix, many_models){
          y = NULL) +   
     facet_wrap(~Metric, scales = "free_y") +
     theme_minimal()
+  
+}
+
+pull_est <- function(res) {
+  
+  res %>%
+    filter(estimand == "MCATE") %>%
+    filter(!str_detect(level, "Non-G|Non-D")) %>%
+    pull(estimate)
   
 }

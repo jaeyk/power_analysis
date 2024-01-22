@@ -26,6 +26,7 @@ if (!require(pacman)) install.packages("pacman")
 
 pacman::p_load(
   tidyverse,
+  data.table,
   glue,
   purrr,
   broom,
@@ -78,13 +79,13 @@ datasummary_skim(df_string %>%
 ## Numeric 
 
 ```{r}
-df_num_sumamry <- create_dummies(df_numeric) %>%
+df_num_summary <- create_dummies(df_numeric) %>%
   select(chinese_origin, immigrant, DEM, GOP, college, female, age)
 
-df_num_sumamry$hate_crime_treatment <- df_string$hate_crime_treatment
+df_num_summary$hate_crime_treatment <- df_string$hate_crime_treatment
 
-datasummary(All(df_num_sumamry) ~ hate_crime_treatment * (mean_no_na + std_no_na),
-            data = df_num_sumamry, 
+datasummary(modelsummary::All(df_num_summary) ~ hate_crime_treatment * (mean_no_na + std_no_na),
+            data = df_num_summary,
             output = here("outputs", "balance.docx"))
 ```
 
@@ -111,24 +112,27 @@ ate_outs <- purrr::map_dfr(list("chinese_virus", "racial_linked_fate", "ethnic_l
 ## Linked fates 
 
 ```{r}
-ate_outs %>% 
+lf_plots <- ate_outs %>% 
   filter(str_detect(outcome, "linked")) %>%
   mutate(outcome = case_when(
-    str_detect(outcome, "racial") ~ "Racial linked fate", 
-    str_detect(outcome, "ethnic") ~ "Ethnic linked fate"
+    str_detect(outcome, "ethnic") ~ "Ethnic linked fate",
+    str_detect(outcome, "racial") ~ "Racial linked fate" 
   )) %>%
   ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = outcome,
              label = round(estimate, 2))) +
   geom_pointrange(position = position_dodge(width = 0.4)) +
   coord_flip() +
   labs(
-    title = "Linked fates",
+    #title = "Linked fates",
     x = "", 
     y = "Estimated ATE",
     col = "Outcome") +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed")  +
-  scale_color_grey(start = 0.3, end = 0.7) +
-  geom_text_repel(position = position_dodge(width = 0.4)) 
+  scale_color_grey(start = 0.7, end = 0.3) +
+  geom_text_repel(position = position_dodge(width = 0.4)) +
+  theme(legend.position = "bottom")
+
+lf_plots
 
 ggsave(here("outputs", "lf_plots.png"), 
        height = 6, 
@@ -242,6 +246,7 @@ ggsave(here("outputs", "policy_plots.png"),
 ## Traditional approach
 
 ```{r}
+
 # Chinese origin 
 df_numeric$chinese_origin <- ifelse(df_numeric$nat_origin == 1, "Chinese", "Non-Chinese")
 
@@ -254,13 +259,11 @@ df_numeric$GOP <- ifelse(df_numeric$pid3 == 3 | df_numeric$pid7 %in% c(7, 5), "G
 df_numeric$immigrant <- ifelse(df_numeric$immigrant %in% c(1, 2), "Immigrant", "Non-immigrant")
 
 # College
-df_numeric$college <- ifelse(df_numeric$educ %in% c(3:6), "College", "Non-college")
+df_numeric$college <- ifelse(df_numeric$educ %in% c(5:6), "College", "Non-college")
 
 # Male
 df_numeric$female <- ifelse(df_numeric$gender4 == 2, "Female", "Else")
-```
 
-```{r}
 # China threat index 
 df_numeric$china_threat_index <- idx_mean(df_numeric$china_threat_1_rule, df_numeric$china_threat_2_rule, df_numeric$china_threat_3_rule)
 
@@ -270,34 +273,6 @@ df_numeric$china_threatend_high <- ifelse(df_numeric$china_threat_index > median
 df_numeric$democracy_sub <- idx_mean(df_numeric$democracy_meaning_1 + df_numeric$democracy_meaning_2 + df_numeric$democracy_meaning_3)
 
 df_numeric$democracy_cat <- ifelse(df_numeric$democracy_sub > median(df_numeric$democracy_sub), "High", "Median and Low")
-```
-
-```{r}
-ols <- function(df, dv) { 
-  
-  lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df) %>%
-    tidy() %>%
-    filter(!str_detect(term, "Int")) %>%
-    mutate(outcome = dv)
-  
-}
-
-nest_ols <- function(df, dv) {
-  
-  df %>%
-    nest() %>%
-    mutate(ols = map(data, ~ols(., dv))) %>%
-    unnest(ols) %>% 
-    mutate(term = case_when(
-      str_detect(term, "4") ~ "Hate crime + political representation", 
-      str_detect(term, "3") ~ "Hate crime + China threat", 
-      str_detect(term, "2") ~ "Hate crime"
-    )) %>%
-    mutate(outcome = case_when(
-      str_detect(outcome, "racial") ~ "Racial linked fate", 
-      str_detect(outcome, "ethnic") ~ "Ethnic linked fate"
-    ))  
-}
 ```
 
 ```{r}
@@ -383,6 +358,8 @@ ggsave(plot = cate_rl_plots,
 ## Double roubst learner
 
 ```{r}
+set.seed(1234)
+
 # racial linked fate
 t2_rl_results <- get_db_rl_estimates(2)
 t3_rl_results <- get_db_rl_estimates(3)
@@ -509,7 +486,7 @@ pid_plot <- results %>%
   facet_wrap(~outcome) +
   geom_pointrange(position = position_dodge(width = 0.2)) +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
-  scale_x_discrete("Covariate level") +
+  scale_x_discrete(" ") +
   scale_y_continuous("Estimated CATE") +
   scale_color_manual(values = c("blue", "red")) +
   labs(col = "Subgroup",
@@ -564,6 +541,8 @@ college_plot <- results %>%
 
 ## Pooled 
 
+### Long
+
 ```{r}
 results_pooled <- results %>%
   filter(estimand == "MCATE")
@@ -572,6 +551,56 @@ results_pooled$level[results_pooled$term == "democracy_cat"] <- rep(c("Median an
 
 results_pooled$level[results_pooled$term == "china_threatend_high"] <- rep(c("Median and low China threat perception", "High China threat perception"), 6)
 ```
+
+### Wide 
+
+```{r}
+level_list <- t2_rl_results %>%
+    filter(estimand == "MCATE") %>%
+    filter(!str_detect(level, "Non-G|Non-D")) %>%
+    pull(level)
+
+term_list <- t2_rl_results %>%
+    filter(estimand == "MCATE") %>%
+    filter(!str_detect(level, "Non-G|Non-D")) %>%
+    pull(term)
+```
+
+```{r}
+rp_wide <- bind_rows(data.frame(
+  level = level_list,
+  term = term_list,
+  chilling_effect = pull_est(t2_rl_results) - pull_est(t3_rl_results),
+  boosting_effect = pull_est(t2_rl_results) - pull_est(t4_rl_results)
+  ) %>%
+  mutate(outcome = "Racial linked fate"),
+  data.frame(
+  level = level_list,
+  term = term_list,
+  chilling_effect = pull_est(t2_el_results) - pull_est(t3_el_results),
+  boosting_effect = pull_est(t2_el_results) - pull_est(t4_el_results)
+  ) %>%
+  mutate(outcome = "Ethnic linked fate")
+) %>%
+  mutate(chilling_effect_fct = ifelse(chilling_effect > 0, "Chilling", "Not chilling"), 
+         boosting_effect_fct = ifelse(boosting_effect < 0, "Boosting", "Not boosting"))
+
+rp_wide %>%
+  filter(chilling_effect_fct == "Not chilling")
+
+rp_wide %>%
+  filter(boosting_effect_fct == "Boosting")
+```
+
+```{r}
+datasummary_crosstab(outcome ~ chilling_effect_fct, 
+                     data = rp_wide)
+
+datasummary_crosstab(outcome ~ boosting_effect_fct, 
+                     data = rp_wide)
+```
+
+### Visualization 
 
 ```{r}
 pooled_cate_plot <- results_pooled %>%
