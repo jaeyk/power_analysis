@@ -628,7 +628,7 @@ pooled_cate_plot <- results_pooled %>%
        y = "Estimated CATE",
        shape = "Outcome",
        col = "Statistical significance") +
-  theme(legend.position = "bottom") +
+  theme(legend.position = "right") +
   scale_color_grey(start = 0.7, end = 0.3) 
 
 pooled_cate_plot
@@ -678,8 +678,8 @@ dev.off()
 
 ```{r}
 png(filename = here("outputs", "pooled_cate_plot.png"), 
-    height = 12, 
-    width = 10, 
+    height = 8, 
+    width = 8, 
     unit = "in", 
     res = 1200)
 
