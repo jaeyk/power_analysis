@@ -611,14 +611,16 @@ pooled_cate_plot <- results_pooled %>%
              ymin = estimate - 1.96 * std_error,
              ymax = estimate + 1.96 * std_error,
              label = round(estimate, 2), 
-             col = significant)) +
+             col = significant,
+             shape = outcome)) +
   geom_pointrange(position = position_dodge(width = 0.2)) +
   geom_text_repel(position = position_dodge(width = 0.2)) +
   coord_flip() +
-  facet_grid(outcome~treatment) +
+  facet_wrap(~treatment) +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
   labs(x = "",
        y = "Estimated CATE",
+       shape = "Outcome",
        col = "Statistical significance") +
   theme(legend.position = "bottom") +
   scale_color_grey(start = 0.7, end = 0.3) 
