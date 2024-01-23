@@ -589,7 +589,8 @@ rp_wide %>%
   filter(chilling_effect_fct == "Not chilling")
 
 rp_wide %>%
-  filter(boosting_effect_fct == "Boosting")
+  filter(boosting_effect_fct == "Boosting") %>%
+  filter(str_detect(outcome, "Ra"))
 ```
 
 ```{r}
@@ -603,9 +604,15 @@ datasummary_crosstab(outcome ~ boosting_effect_fct,
 ### Visualization 
 
 ```{r}
+tr_string <- unique(results_pooled$treatment)
 pooled_cate_plot <- results_pooled %>%
   filter(!str_detect(level, "Non-G|Non-D")) %>%
   mutate(significant = ifelse(estimate - 1.96 * std_error > 0, "Significant", "Non-significant")) %>%
+  mutate(treatment = case_when(
+    treatment == tr_string[1] ~ paste("A. ", tr_string[1]),
+    treatment == tr_string[2] ~ paste("B. ", tr_string[2]),
+    treatment == tr_string[3] ~ paste("C. ", tr_string[3])
+  )) %>%
   ggplot(aes(x = fct_reorder(level, estimate), 
              y = estimate,
              ymin = estimate - 1.96 * std_error,
@@ -614,7 +621,7 @@ pooled_cate_plot <- results_pooled %>%
              col = significant,
              shape = outcome)) +
   geom_pointrange(position = position_dodge(width = 0.2)) +
-  geom_text_repel(position = position_dodge(width = 0.2)) +
+  #geom_text_repel(position = position_dodge(width = 0.2)) +
   coord_flip() +
   facet_wrap(~treatment) +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
