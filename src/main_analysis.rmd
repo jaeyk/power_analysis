@@ -145,7 +145,6 @@ lf_mods <- list(
   "Ethnic linked fate (weighted)" = feols(ethnic_linked_fate ~ factor(hate_crime_treatment), data = df_numeric, weights = ~weight, vcov = "hetero"),
   "Racial linked fate" = feols(racial_linked_fate ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero"),
   "Racial linked fate (weighted)" = feols(racial_linked_fate ~ factor(hate_crime_treatment), data = df_numeric, weights = ~weight, vcov = "hetero")
-
 )
 
 mad_cm <- c(
@@ -623,7 +622,7 @@ pooled_cate_plot <- results_pooled %>%
   geom_pointrange(position = position_dodge(width = 0.2)) +
   #geom_text_repel(position = position_dodge(width = 0.2)) +
   coord_flip() +
-  facet_wrap(~treatment) +
+  facet_wrap(~treatment, ncol = 1, nrow = 3) +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
   labs(x = "",
        y = "Estimated CATE",
