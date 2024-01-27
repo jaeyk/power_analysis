@@ -25,6 +25,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 if (!require(pacman)) install.packages("pacman")
 
 pacman::p_load(
+  raedxl, 
   tidyverse,
   data.table,
   glue,
@@ -39,6 +40,7 @@ pacman::p_load(
   tidyhte, 
   fixest,
   glmnet,
+  irr, # inter-coder reliability
   # text analysis
   tidytext,
   readtext,
@@ -62,7 +64,43 @@ df_string <- read_csv(here("raw_data", "HARV0049_OUTPUT_strings.csv"))
 df_numeric <- read_csv(here("raw_data", "HARV0049_OUTPUT_numeric.csv"))
 
 # processed data (content analysis)
-coded_text <- read_csv(here("processed_data", "coded_text_JYK.csv"))
+coded_text1 <- read_csv(here("processed_data", "coded_text_JYK.csv"))
+
+coded_text2 <- readxl::read_xlsx(here("processed_Data", "coded_text_Joan.xlsx")) %>%
+  select(caseid, unsure, succeed, fail, contingent, misread)
+
+coded_text <- left_join(coded_text1, coded_text2, 
+          by = c("caseid")) 
+
+coded_text <- coded_text %>% 
+  mutate(across(is.numeric, .fns = ~replace_na(.,0))) 
+```
+
+# Inter-coder reliability test 
+
+```{r}
+irr_out <- reduce(list(get_int_coder(coded_text %>%
+                select(unsure.x, unsure.y), "unsure"),
+get_int_coder(coded_text %>%
+                select(succeed.x, succeed.y), "succeed"),
+get_int_coder(coded_text %>%
+                select(fail.x, fail.y), "fail"),
+get_int_coder(coded_text %>%
+                select(contingent.x, contingent.y), "contingent"),
+get_int_coder(coded_text %>%
+                select(misread.x, misread.y), "misread")), bind_rows) 
+
+modelsummary::datasummary_df(data = irr_out, 
+                             output = here("outputs", "irr_tb.docx"))
+```
+
+```{r}
+coded_text <- coded_text %>%
+  mutate(unsure = ifelse(unsure.x == unsure.y, unsure.x, NA), 
+         succeed = ifelse(succeed.x == succeed.y, succeed.x, NA),
+         fail = ifelse(fail.x == fail.y, fail.x, NA),
+         contingent = ifelse(contingent.x == contingent.y, contingent.x, NA),
+         misread = ifelse(misread.x == misread.y, misread.x, NA)) 
 ```
 
 # Data summary 
@@ -717,33 +755,17 @@ datasummary(All(df_string_word_pct) ~ hate_crime_treatment * (mean_no_na + std_n
 
 ## Content analysis
 
-```{r}
-coded_text <- coded_text %>%
-  mutate(unsure = ifelse(is.na(asian_open_ended_question), NA, unsure))
-
-coded_text <- coded_text %>%
-  replace_na(list(unsure = 0, succeed = 0, fail = 0, contingent = 0, misread = 0)) %>%
-  mutate(validate = unsure + succeed + fail + contingent + misread) 
-
-coded_text %>%
-  filter(validate > 1) # this should be zero
-```
+94% response rate
 
 ```{r}
 coded_text %>%
   filter(!is.na(asian_open_ended_question)) %>% # n = 1,878, 94% response rate 
-  filter(misread == 0) %>%
-  pull(fail) %>%
-  mean()
-
-coded_text %>%
-  filter(!is.na(asian_open_ended_question)) %>% # n = 1,878, 94% response rate 
-  filter(misread == 0) %>% # n = 1,636
+  filter(misread == 0) %>% # n = 1,608
   group_by(hate_crime_treatment) %>%
-  summarize(unsure_rate = mean(unsure), 
-            succeed_rate = mean(succeed), 
-            fail_rate = mean(fail), 
-            contingnet_rate = mean(contingent)) %>%
+  summarize(unsure_rate = mean(unsure, na.rm = T), 
+            succeed_rate = mean(succeed, na.rm = T), 
+            fail_rate = mean(fail, na.rm = T), 
+            contingnet_rate = mean(contingent, na.rm = T)) %>%
   pivot_longer(matches("rate")) %>%
   mutate(name = case_when(
     str_detect(name, "unsure") ~ "Unsure", 
@@ -753,8 +775,8 @@ coded_text %>%
   )) %>%
   ggplot(aes(x = hate_crime_treatment, y = value)) +
   geom_col() +
-  geom_errorbar(aes(ymin = value - 1.96 * sd(value) / sqrt(length(value)),
-                    ymax = value + 1.96 * sd(value) / sqrt(length(value))),
+  geom_errorbar(aes(ymin = value - 1.96*sd(value) / sqrt(length(value)),
+                    ymax = value + 1.96*sd(value) / sqrt(length(value))),
                 position = position_dodge(width = 0.4)) +
   geom_text(aes(label = paste0(round(value, 2)*100, "%")), nudge_y = 0.12) +
   facet_wrap(~name) +
@@ -763,9 +785,9 @@ coded_text %>%
   labs(x = "", 
        y = "Proportion of the responses",
        title = "Content analysis of open-ended responses",
-       subtitle = "Excluding non- and misread-responses (n = 1,636)")
+       subtitle = "Excluding non- and misread-responses (n = 1,608)")
 
-ggsave(here("outputs", "content_analysis.png"))
+ggsave(here("outputs", "content_analysis.png"), width = 10, height = 6)
 ```
 
 ## keyATM

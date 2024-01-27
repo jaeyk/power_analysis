@@ -1,4 +1,26 @@
 
+get_int_coder <- function(df, var_name) {
+  
+  # percentage agreement 
+  pct_agr_score <- df %>%
+    irr::agree()
+  
+  # calculate Cohen's kappa
+  kappa_score <- df %>%
+    irr::kappa2() 
+
+  out <- data.frame(
+    agree = pct_agr_score$value,
+    kappa = kappa_score$value
+  )
+  
+  out <- out %>% 
+    mutate(var = var_name) %>%
+    select(var, everything())
+  
+  return(out)
+}
+
 ols <- function(df, dv) { 
   
   lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df) %>%
