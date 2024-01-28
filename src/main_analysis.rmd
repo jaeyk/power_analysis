@@ -65,7 +65,6 @@ df_numeric <- read_csv(here("raw_data", "HARV0049_OUTPUT_numeric.csv"))
 
 # processed data (content analysis)
 coded_text1 <- read_csv(here("processed_data", "coded_text_JYK.csv"))
-
 coded_text2 <- readxl::read_xlsx(here("processed_Data", "coded_text_Joan.xlsx")) %>%
   select(caseid, unsure, succeed, fail, contingent, misread)
 
@@ -130,6 +129,10 @@ datasummary(modelsummary::All(df_num_summary) ~ hate_crime_treatment * (mean_no_
 # ATE
 
 ```{r}
+# no scientific notation 
+options(scipen = 999) 
+
+# function to estimate ATE
 estimate_ate <- function(dv) {
   out <- lm_robust(eval(as.symbol(dv)) ~ factor(hate_crime_treatment), data = df_numeric) %>%
     tidy() %>%
@@ -138,8 +141,34 @@ estimate_ate <- function(dv) {
   
   return(out)
 }
+```
 
-ate_outs <- purrr::map_dfr(list("chinese_virus", "racial_linked_fate", "ethnic_linked_fate", "asian_racial_id", "asian_ethnic_id", "affirmative_action", "policy_crime"), estimate_ate) %>%
+```{r}
+# correlation test
+cor.test(df_numeric$ethnic_linked_fate, df_numeric$racial_linked_fate) 
+# r = 0.72 [low 95% CI: 0.7, high 95% CI: 0.74, p.value < 0.0001]
+
+cor_test_outs <- df_numeric %>%
+  group_by(hate_crime_treatment) %>%
+  summarize(cor = list(cor.test(ethnic_linked_fate, racial_linked_fate))) 
+
+cor_test_outs$cor[[1]] # r = 0.72
+cor_test_outs$cor[[2]] # r = 0.72
+cor_test_outs$cor[[3]] # r = 0.68
+cor_test_outs$cor[[4]] # r = 0.76
+
+# 72% agreement 
+df_numeric %>%
+  mutate(re_agree = ifelse(ethnic_linked_fate == racial_linked_fate, 1, 0)) %>%
+  pull(re_agree) %>%
+  mean()
+
+df_numeric <- df_numeric %>%
+  mutate(re_linked_agree = ifelse(ethnic_linked_fate == racial_linked_fate, 1, 0))
+```
+
+```{r}
+ate_outs <- purrr::map_dfr(list("chinese_virus", "racial_linked_fate", "ethnic_linked_fate", "re_linked_agree", "asian_racial_id", "asian_ethnic_id", "affirmative_action", "policy_crime"), estimate_ate) %>%
   mutate(term = case_when(
     str_detect(term, "4") ~ "Hate crime + political representation", 
     str_detect(term, "3") ~ "Hate crime + China threat", 
@@ -151,10 +180,10 @@ ate_outs <- purrr::map_dfr(list("chinese_virus", "racial_linked_fate", "ethnic_l
 
 ```{r}
 lf_plots <- ate_outs %>% 
-  filter(str_detect(outcome, "linked")) %>%
+  filter(str_detect(outcome, "linked_fate")) %>%
   mutate(outcome = case_when(
     str_detect(outcome, "ethnic") ~ "Ethnic linked fate",
-    str_detect(outcome, "racial") ~ "Racial linked fate" 
+    str_detect(outcome, "racial") ~ "Racial linked fate",
   )) %>%
   ggplot(aes(x = term, y = estimate, ymax = conf.high, ymin = conf.low, col = outcome,
              label = round(estimate, 2))) +
@@ -197,6 +226,26 @@ modelsummary(lf_mods,
              coef_map = mad_cm,
              coef_omit = "Intercept",
              output = here("outputs", "lf_mods.docx"))
+```
+
+```{r}
+lf_agree_mods <- list(
+  "Racial and ethnic linked agreement" = feols(re_linked_agree ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero"),
+  "Racial and ethnic linked agreement (weighted)" = feols(re_linked_agree ~ factor(hate_crime_treatment), data = df_numeric, weights = ~weight, vcov = "hetero")
+)
+
+mad_cm <- c(
+  "factor(hate_crime_treatment)4" = "Hate crime + political representation", 
+  "factor(hate_crime_treatment)3" = "Hate crime + China threat", 
+  "factor(hate_crime_treatment)2" = "Hate crime"
+)
+
+modelsummary(lf_agree_mods,
+             estimate = c("{estimate}{stars} \n [{conf.low}, {conf.high}] \n p = {p.value}"),
+             statistic = NULL,
+             coef_map = mad_cm,
+             coef_omit = "Intercept",
+             output = here("outputs", "lf_agree_mods.docx"))
 ```
 
 ## Identity importance 
@@ -307,7 +356,7 @@ df_numeric$china_threat_index <- idx_mean(df_numeric$china_threat_1_rule, df_num
 df_numeric$china_threatend_high <- ifelse(df_numeric$china_threat_index > median(df_numeric$china_threat_index), "High", "Median and Low")
 
 # Democracy conception
-df_numeric$democracy_sub <- idx_mean(df_numeric$democracy_meaning_1 + df_numeric$democracy_meaning_2 + df_numeric$democracy_meaning_3)
+df_numeric$democracy_sub <- idx_mean(df_numeric$democracy_meaning_2 + df_numeric$democracy_meaning_4 + df_numeric$democracy_meaning_6)
 
 df_numeric$democracy_cat <- ifelse(df_numeric$democracy_sub > median(df_numeric$democracy_sub), "High", "Median and Low")
 ```
@@ -484,7 +533,9 @@ dem_pec_plot <- results %>%
        title = "Marginal effects across substantive democracy perception") +
   coord_flip() +
   scale_color_grey(start = 0.3, end = 0.7)
+```
 
+```{r}
 cn_threat_plot <- results %>%
   filter(estimand == "MCATE") %>%
   filter(term == "china_threatend_high") %>%
@@ -621,13 +672,42 @@ rp_wide <- bind_rows(data.frame(
 ) %>%
   mutate(chilling_effect_fct = ifelse(chilling_effect > 0, "Chilling", "Not chilling"), 
          boosting_effect_fct = ifelse(boosting_effect < 0, "Boosting", "Not boosting"))
-
-rp_wide %>%
-  filter(chilling_effect_fct == "Not chilling")
-
-rp_wide %>%
-  filter(boosting_effect_fct == "Boosting") %>%
-  filter(str_detect(outcome, "Ra"))
+# 
+# rp_wide %>%
+#   filter(chilling_effect_fct == "Not chilling")
+# 
+# rp_wide %>%
+#   filter(chilling_effect_fct == "Chilling") %>%
+#   filter(str_detect(outcome, "Ra")) %>%
+#   pull(chilling_effect) %>%
+#   mean()
+# 
+# rp_wide %>%
+#   filter(chilling_effect_fct == "Chilling") %>%
+#   filter(str_detect(outcome, "Et")) %>%
+#   pull(chilling_effect) %>%
+#   mean()
+# 
+# rp_wide %>%
+#   filter(boosting_effect_fct == "Boosting") %>%
+#   filter(str_detect(outcome, "Ra")) %>%
+#   arrange(boosting_effect)
+# 
+# rp_wide %>%
+#   filter(boosting_effect_fct == "Boosting") %>%
+#   filter(str_detect(outcome, "Ra")) %>%
+#   pull(boosting_effect) %>%
+#   mean()
+# 
+# rp_wide %>%
+#   filter(boosting_effect_fct == "Boosting") %>%
+#   filter(str_detect(outcome, "Et"))
+# 
+# rp_wide %>%
+#   filter(boosting_effect_fct == "Boosting") %>%
+#   filter(str_detect(outcome, "Et")) %>% 
+#   pull(boosting_effect) %>%
+#   mean()
 ```
 
 ```{r}
@@ -758,6 +838,11 @@ datasummary(All(df_string_word_pct) ~ hate_crime_treatment * (mean_no_na + std_n
 94% response rate
 
 ```{r}
+coded_text %>%
+  filter(!is.na(asian_open_ended_question)) %>% # n = 1,878, 94% response rate 
+  filter(misread == 0) %>%
+  summarize(mean(fail, na.rm = T))
+
 coded_text %>%
   filter(!is.na(asian_open_ended_question)) %>% # n = 1,878, 94% response rate 
   filter(misread == 0) %>% # n = 1,608
