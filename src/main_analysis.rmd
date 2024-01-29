@@ -91,6 +91,9 @@ get_int_coder(coded_text %>%
 
 modelsummary::datasummary_df(data = irr_out, 
                              output = here("outputs", "irr_tb.docx"))
+
+modelsummary::datasummary_df(data = irr_out, 
+                             output = "latex")
 ```
 
 ```{r}
@@ -111,6 +114,11 @@ datasummary_skim(df_string %>%
                    select(nat_origin, immigrant), 
                  type = "categorical",
                  output = here("outputs", "cat_data_summary.docx"))
+
+datasummary_skim(df_string %>%
+                   select(nat_origin, immigrant), 
+                 type = "categorical",
+                 output = "latex")
 ```
 
 ## Numeric 
@@ -122,8 +130,14 @@ df_num_summary <- create_dummies(df_numeric) %>%
 df_num_summary$hate_crime_treatment <- df_string$hate_crime_treatment
 
 datasummary(modelsummary::All(df_num_summary) ~ hate_crime_treatment * (mean_no_na + std_no_na),
+            fmt = 3,
             data = df_num_summary,
             output = here("outputs", "balance.docx"))
+
+datasummary(modelsummary::All(df_num_summary) ~ hate_crime_treatment * (mean_no_na + std_no_na),
+            fmt = 3, 
+            data = df_num_summary,
+            output = "latex")
 ```
 
 # ATE
@@ -219,13 +233,22 @@ mad_cm <- c(
   "factor(hate_crime_treatment)3" = "Hate crime + China threat", 
   "factor(hate_crime_treatment)2" = "Hate crime"
 )
+```
 
+```{r}
 modelsummary(lf_mods,
              estimate = c("{estimate}{stars} \n [{conf.low}, {conf.high}] \n p = {p.value}"),
              statistic = NULL,
              coef_map = mad_cm,
              coef_omit = "Intercept",
              output = here("outputs", "lf_mods.docx"))
+
+modelsummary(lf_mods,
+             estimate = c("{estimate}{stars} \n [{conf.low}, {conf.high}] \n p = {p.value}"),
+             statistic = NULL,
+             coef_map = mad_cm,
+             #coef_omit = "Intercept",
+             output = "latex")
 ```
 
 ```{r}
@@ -239,13 +262,24 @@ mad_cm <- c(
   "factor(hate_crime_treatment)3" = "Hate crime + China threat", 
   "factor(hate_crime_treatment)2" = "Hate crime"
 )
+```
 
+```{r}
 modelsummary(lf_agree_mods,
              estimate = c("{estimate}{stars} \n [{conf.low}, {conf.high}] \n p = {p.value}"),
              statistic = NULL,
              coef_map = mad_cm,
              coef_omit = "Intercept",
              output = here("outputs", "lf_agree_mods.docx"))
+```
+
+```{r}
+modelsummary(lf_agree_mods,
+             estimate = c("{estimate}{stars} \n [{conf.low}, {conf.high}] \n p = {p.value}"),
+             statistic = NULL,
+             coef_map = mad_cm,
+             coef_omit = "Intercept",
+             output = "latex")
 ```
 
 ## Identity importance 
