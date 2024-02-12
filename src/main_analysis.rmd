@@ -326,6 +326,12 @@ png(filename = here("outputs", "ceiling_effect.png"),
 ceiling_plot 
 
 dev.off()
+
+t.test(racial_linked_fate ~ factor(hate_crime_treatment), data = df_numeric %>%
+          filter(hate_crime_treatment %in% c(2,4)))
+
+t.test(ethnic_linked_fate ~ factor(hate_crime_treatment), data = df_numeric %>%
+          filter(hate_crime_treatment %in% c(2,4)))
 ```
 
 ```{r}
