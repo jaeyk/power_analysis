@@ -305,9 +305,12 @@ dev.off()
 
 ceiling_plot <- df_num_desc %>%
   group_by(treat_fct, name) %>%
-  summarize(ceiling_pct = mean(value == 5)) %>%
+  summarize(ceiling_pct = mean(value == 5),
+            ci_lower = mean(value == 5) - 1.96 * sqrt(mean(value == 5) * (1 - mean(value == 5)) / n()),
+            ci_upper = mean(value == 5) + 1.96 * sqrt(mean(value == 5) * (1 - mean(value == 5)) / n())) %>%
   ggplot(aes(x = treat_fct, y = ceiling_pct)) +
   geom_col() +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2, position = position_dodge(0.9)) +
   coord_flip() +
   facet_wrap(~name) +
   labs(x = "",
@@ -316,7 +319,7 @@ ceiling_plot <- df_num_desc %>%
 
 png(filename = here("outputs", "ceiling_effect.png"),
     height = 5, 
-    width = 5, 
+    width = 10, 
     unit = "in", 
     res = 1200)
 
