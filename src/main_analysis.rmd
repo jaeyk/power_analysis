@@ -34,6 +34,8 @@ pacman::p_load(
   patchwork,
   here,
   estimatr, 
+  DACF,
+  ggpubr, 
   ggrepel,
   modelsummary, 
   marginaleffects,
@@ -155,6 +157,11 @@ estimate_ate <- function(dv) {
   
   return(out)
 }
+
+df_numeric %>%
+    group_by(hate_crime_treatment) %>%
+    summarize(r_mean = mean(racial_linked_fate), 
+              e_mean = mean(ethnic_linked_fate))
 ```
 
 ```{r}
@@ -221,6 +228,104 @@ ggsave(here("outputs", "lf_plots.png"),
 ```
 
 ```{r}
+df_num_desc <- df_numeric %>%
+  pivot_longer(matches("_linked_fate")) %>%
+  mutate(name = case_when(
+    name == "ethnic_linked_fate" ~ "Ethnic linked fate",
+    name == "racial_linked_fate" ~ "Racial linked fate"
+  )) %>%
+  mutate(treat_fct = case_when(
+    hate_crime_treatment == 1 ~ "Control",
+    hate_crime_treatment == 2 ~ "Hate crime",
+    hate_crime_treatment == 3 ~ "Hate crime + China threat" ,
+    hate_crime_treatment == 4 ~ "Hate crime + Political representation"
+  ))
+```
+
+```{r}
+df_t2_plot <- df_num_desc %>%
+  filter(hate_crime_treatment %in% c(1,2)) %>%
+  ggplot(aes(x = value, 
+             linetype = treat_fct,
+             color = treat_fct,
+             fill = treat_fct)) +
+  geom_density(position = position_dodge(), 
+               alpha = 0.3) +
+  theme(legend.position = "bottom") +
+  facet_wrap(~name, ncol = 2) +
+  labs(x = "Response value", y = "Density",
+       linetype = "Group",
+       color = "Group",
+       fill = "Group")
+
+df_t3_plot <- df_num_desc %>%
+  filter(hate_crime_treatment %in% c(1,3)) %>%
+  ggplot(aes(x = value, 
+             linetype = treat_fct,
+             color = treat_fct,
+             fill = treat_fct)) +
+  geom_density(position = position_dodge(), 
+               alpha = 0.3) +
+  theme(legend.position = "bottom") +
+  facet_wrap(~name, ncol = 2) +
+  labs(x = "Response value", y = "Density",
+       linetype = "Group",
+       color = "Group",
+       fill = "Group")
+
+df_t4_plot <- df_num_desc %>%
+  filter(hate_crime_treatment %in% c(1,4)) %>%
+  ggplot(aes(x = value, 
+             linetype = treat_fct,
+             color = treat_fct,
+             fill = treat_fct)) +
+  geom_density(position = position_dodge(), 
+               alpha = 0.3) +
+  theme(legend.position = "bottom") +
+  facet_wrap(~name, ncol = 2) +
+  labs(x = "Response value", y = "Density",
+       linetype = "Group",
+       color = "Group",
+       fill = "Group")
+```
+
+```{r}
+density_plots <- df_t2_plot / df_t3_plot / df_t4_plot +
+  plot_annotation(tag_levels = "a")
+
+png(filename = here("outputs", "density_plots.png"),
+    height = 10, 
+    width = 8, 
+    unit = "in", 
+    res = 1200)
+
+density_plots
+
+dev.off()
+
+ceiling_plot <- df_num_desc %>%
+  group_by(treat_fct, name) %>%
+  summarize(ceiling_pct = mean(value == 5)) %>%
+  ggplot(aes(x = treat_fct, y = ceiling_pct)) +
+  geom_col() +
+  coord_flip() +
+  facet_wrap(~name) +
+  labs(x = "",
+       y = "Ceiling %") +
+  scale_y_continuous(labels = scales::percent)
+
+png(filename = here("outputs", "ceiling_effect.png"),
+    height = 5, 
+    width = 5, 
+    unit = "in", 
+    res = 1200)
+
+ceiling_plot 
+
+dev.off()
+```
+
+```{r}
 lf_mods <- list(
   "Ethnic linked fate" = feols(ethnic_linked_fate ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero"),
   "Ethnic linked fate (weighted)" = feols(ethnic_linked_fate ~ factor(hate_crime_treatment), data = df_numeric, weights = ~weight, vcov = "hetero"),
@@ -240,7 +345,7 @@ modelsummary(lf_mods,
              estimate = c("{estimate}{stars} \n [{conf.low}, {conf.high}] \n p = {p.value}"),
              statistic = NULL,
              coef_map = mad_cm,
-             coef_omit = "Intercept",
+             #coef_omit = "Intercept",
              output = here("outputs", "lf_mods.docx"))
 
 modelsummary(lf_mods,
