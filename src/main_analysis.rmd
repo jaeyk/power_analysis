@@ -480,6 +480,13 @@ ggsave(here("outputs", "policy_plots.png"),
 ## Traditional approach
 
 ```{r}
+# Function to compute bootstrap confidence interval for the median
+bootstrap_ci <- function(x, alpha = 0.05, n_bootstrap = 1000) {
+  bootstrapped_medians <- replicate(n_bootstrap, median(sample(x, replace = TRUE), na.rm = T))
+  lower_ci <- quantile(bootstrapped_medians, alpha / 2)
+  upper_ci <- quantile(bootstrapped_medians, 1 - alpha / 2)
+  return(c(lower_ci, upper_ci))
+}
 
 # Chinese origin 
 df_numeric$chinese_origin <- ifelse(df_numeric$nat_origin == 1, "Chinese", "Non-Chinese")
@@ -497,12 +504,58 @@ df_numeric$college <- ifelse(df_numeric$educ %in% c(5:6), "College", "Non-colleg
 
 # Male
 df_numeric$female <- ifelse(df_numeric$gender4 == 2, "Female", "Else")
+```
 
+```{r}
 # China threat index 
 df_numeric$china_threat_index <- idx_mean(df_numeric$china_threat_1_rule, df_numeric$china_threat_2_rule, df_numeric$china_threat_3_rule)
 
 df_numeric$china_threatend_high <- ifelse(df_numeric$china_threat_index > median(df_numeric$china_threat_index), "High", "Median and Low")
 
+df_numeric %>%
+  pivot_longer(matches("_threat_")) %>%
+  group_by(name) %>%
+  summarize(
+    median_word = median(value),
+    lower_ci = bootstrap_ci(value)[1],
+    upper_ci = bootstrap_ci(value)[2]
+  )
+
+df_numeric %>%
+  pivot_longer(matches("_threat_")) %>%
+  group_by(DEM, name) %>%
+  summarize(
+    median_word = median(value),
+    lower_ci = bootstrap_ci(value)[1],
+    upper_ci = bootstrap_ci(value)[2]
+  )
+
+cn_threat_perception_plot <- df_numeric %>%
+  select(-china_threat_index) %>%
+  pivot_longer(matches("_threat_")) %>%
+  mutate(name = case_when(
+    name == "china_threat_1_rule" ~ "Economic threat",
+    name == "china_threat_2_rule" ~ "Security threat",
+    name == "china_threat_3_rule" ~ "Democracy threat"
+  )) %>%
+  ggplot(aes(x = value, fill = name)) +
+  geom_density(alpha = 0.3) +
+  labs(y = "Density",
+       x = "China threat scale (0-100)",
+       fill = "Dimensions")
+
+png(filename = here("outputs", "cn_threat_perception_plot.png"), 
+    height = 8, 
+    width = 10, 
+    unit = "in", 
+    res = 1200)
+
+cn_threat_perception_plot
+
+dev.off()
+```
+
+```{r}
 # Democracy conception
 df_numeric$democracy_sub <- idx_mean(df_numeric$democracy_meaning_2 + df_numeric$democracy_meaning_4 + df_numeric$democracy_meaning_6)
 
@@ -964,14 +1017,6 @@ dev.off()
 
 ```{r}
 df_string$word_count <- stringr::str_count(df_string$asian_open_ended_question)
-
-# Function to compute bootstrap confidence interval for the median
-bootstrap_ci <- function(x, alpha = 0.05, n_bootstrap = 1000) {
-  bootstrapped_medians <- replicate(n_bootstrap, median(sample(x, replace = TRUE), na.rm = T))
-  lower_ci <- quantile(bootstrapped_medians, alpha / 2)
-  upper_ci <- quantile(bootstrapped_medians, 1 - alpha / 2)
-  return(c(lower_ci, upper_ci))
-}
 
 df_string %>%
   summarize(
