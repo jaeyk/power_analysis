@@ -83,8 +83,7 @@ diag_df_diff$effect_size <- search_space$effect_size
 diag_df_diff$interaction_effect_ratio <- search_space$interaction_effect_ratio
 
 power_plot <- diag_df_diff %>%
-  filter(effect_size == unique(search_space$effect_size)[2]) %>%
-  ggplot(aes(
+    ggplot(aes(
     x = sample_size, y = power,
     ymax = power + 1.96 * `se(power)`,
     ymin = power - 1.96 * `se(power)`,
@@ -104,6 +103,12 @@ power_plot <- diag_df_diff %>%
   facet_grid(~interaction_effect_ratio) +
   theme(legend.position = "none")
 
+png(filename = here("outputs", "int_power.png"),
+    height = 7, 
+    width = 10, 
+    unit = "in", 
+    res = 1200)
+
 power_plot
 
-plotly::ggplotly(power_plot)
+dev.off()
