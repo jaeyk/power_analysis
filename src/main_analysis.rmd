@@ -635,6 +635,10 @@ results <- bind_rows(rl_results, el_results)
 write_csv(results, here("processed_data", "cate_results.csv"))
 
 results <- read_csv(here("processed_data", "cate_results.csv"))
+
+View(results %>%
+  filter(estimand == "MCATE") %>%
+  arrange(outcome, treatment, desc(estimate)))
 ```
 
 ## Pre-registered
@@ -959,6 +963,56 @@ dev.off()
 ## Descriptive statitics 
 
 ```{r}
+df_string$word_count <- stringr::str_count(df_string$asian_open_ended_question)
+
+# Function to compute bootstrap confidence interval for the median
+bootstrap_ci <- function(x, alpha = 0.05, n_bootstrap = 1000) {
+  bootstrapped_medians <- replicate(n_bootstrap, median(sample(x, replace = TRUE), na.rm = T))
+  lower_ci <- quantile(bootstrapped_medians, alpha / 2)
+  upper_ci <- quantile(bootstrapped_medians, 1 - alpha / 2)
+  return(c(lower_ci, upper_ci))
+}
+
+df_string %>%
+  summarize(
+    median_word = median(word_count, na.rm = TRUE),
+    lower_ci = bootstrap_ci(word_count)[1],
+    upper_ci = bootstrap_ci(word_count)[2]
+  )
+
+df_string %>%
+  group_by(hate_crime_treatment) %>%
+  summarize(
+    median_word = median(word_count, na.rm = TRUE),
+    lower_ci = bootstrap_ci(word_count)[1],
+    upper_ci = bootstrap_ci(word_count)[2]
+  ) %>%
+  datasummary_df(output = "latex")
+```
+
+```{r}
+word_count_plot <- df_string %>%
+  ggplot(aes(x = word_count)) +
+  geom_histogram(bins = 100, alpha = 0.3) +
+  geom_vline(xintercept = median(df_string$word_count, na.rm = T), 
+             linetype = 2) +
+  labs(x = "Word count", 
+       y = "Frequency", 
+       title = "The frequency of word counts in open-ended responses") +
+  annotate("text", x = 500, y = 200, label = "The median word count is 44")
+
+png(filename = here("outputs", "word_count.png"),
+    height = 5, 
+    width = 8, 
+    unit = "in", 
+    res = 1200)
+
+word_count_plot
+
+dev.off()
+```
+
+```{r}
 my_stop_words <- bind_rows(stop_words, 
                            tibble(word = c("asian", "asians", "american", "americans"),
                                   lexicon = rep("custom", 4)))
@@ -991,6 +1045,10 @@ coded_text %>%
   filter(misread == 0) %>%
   summarize(mean(fail, na.rm = T))
 
+coded_text$hate_crime_treatment[coded_text$hate_crime_treatment == "control"] <- "Control"
+```
+
+```{r}
 coded_text %>%
   filter(!is.na(asian_open_ended_question)) %>% # n = 1,878, 94% response rate 
   filter(misread == 0) %>% # n = 1,608
