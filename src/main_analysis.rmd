@@ -396,6 +396,27 @@ modelsummary(lf_agree_mods,
              output = "latex")
 ```
 
+## Other outcomes 
+
+```{r}
+other_mods <- list(
+  "Chinese virus" = feols(chinese_virus ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero"),
+  "Asian race ID" = feols(asian_racial_id ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero"),
+  "Asian ethnic ID" = feols(asian_ethnic_id ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero"),
+  "Affirmative action" = feols(affirmative_action ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero"),
+  "Police funding" = feols(policy_crime ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero")
+)
+```
+
+```{r}
+modelsummary(other_mods,
+             estimate = c("{estimate}{stars} \n [{conf.low}, {conf.high}] \n p = {p.value}"),
+             statistic = NULL,
+             coef_map = mad_cm,
+             #coef_omit = "Intercept",
+             output = "latex")
+```
+
 ## Identity importance 
 
 ```{r}
@@ -1091,6 +1112,26 @@ coded_text %>%
   summarize(mean(fail, na.rm = T))
 
 coded_text$hate_crime_treatment[coded_text$hate_crime_treatment == "control"] <- "Control"
+```
+
+```{r}
+coded_text_summary <- coded_text %>%
+  mutate(text_responded = ifelse(!is.na(asian_open_ended_question) & misread == 0, "responded", "not_responded")) %>%
+  mutate(text_responded = ifelse(is.na(text_responded), "not_responded", text_responded)) 
+
+df_num_summary_with_case <- create_dummies(df_numeric) %>%
+  select(caseid, chinese_origin, immigrant, DEM, GOP, college, female, age)
+
+coded_text_meta_summary <- coded_text_summary %>%
+  left_join(df_num_summary_with_case) %>%
+  select(text_responded, chinese_origin, immigrant, DEM, GOP, college, female, age)
+
+datasummary_balance(~text_responded, 
+                    data = coded_text_meta_summary,
+                    fmt = fmt_decimal(digits = 2, pdigits = 3), 
+                    dinm_statistic = "p.value", 
+                    stars = TRUE, 
+                    output = "latex")
 ```
 
 ```{r}
