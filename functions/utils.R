@@ -60,11 +60,15 @@ get_db_rl_estimates <- function(treated_n) {
   
   df_sub$chinese_origin <- factor(df_sub$chinese_origin)
   df_sub$democracy_cat <- factor(df_sub$democracy_cat)
-  df_sub$china_threatend_high <- factor(df_sub$china_threatend_high) 
   df_sub$DEM <- factor(df_sub$DEM) 
   df_sub$GOP <- factor(df_sub$GOP) 
   df_sub$immigrant <- factor(df_sub$immigrant) 
   df_sub$college <- factor(df_sub$college) 
+
+  df_sub$china_threatend_high <- factor(df_sub$china_threatend_high) 
+  df_sub$china_threatend_high_econ <- factor(df_sub$china_threatend_high_econ) 
+  df_sub$china_threatend_high_security <- factor(df_sub$china_threatend_high_security) 
+  df_sub$china_threatend_high_democracy <- factor(df_sub$china_threatend_high_democracy) 
   
   # known propensity score
   df_sub <- df_sub %>%
@@ -75,7 +79,7 @@ get_db_rl_estimates <- function(treated_n) {
     add_known_propensity_score("ps") %>% # known because this is an experiment 
     add_outcome_model("SL.glmnet") %>% # ensemble of machine learning models 
     # discrete
-    add_moderator("Stratified", chinese_origin, democracy_cat, china_threatend_high, DEM, GOP, immigrant, college) %>%
+    add_moderator("Stratified", chinese_origin, democracy_cat, china_threatend_high, china_threatend_high_econ, china_threatend_high_security, china_threatend_high_democracy, DEM, GOP, immigrant, college) %>%
     # continuous
     #add_moderator("KernelSmooth", china_threat_index) %>%
     add_vimp(sample_splitting = FALSE) -> hte_cfg
@@ -90,16 +94,89 @@ get_db_rl_estimates <- function(treated_n) {
       treated, # a 
       chinese_origin, # x1  
       democracy_cat, # x2 
-      china_threatend_high, # x3 
-      DEM, # x4 
-      GOP, # x5
+      china_threatend_high, # x3
+      china_threatend_high_econ, #x4 
+      china_threatend_high_security, #x5
+      china_threatend_high_democracy, #x6
+      DEM, # x7
+      GOP, # x8
       immigrant, 
       college
     ) %>%
     construct_pseudo_outcomes(racial_linked_fate, treated) -> df_sub_splits 
   
   df_sub_splits %>%
-    estimate_QoI(chinese_origin, democracy_cat, china_threatend_high, DEM, GOP, immigrant, college) -> results
+    estimate_QoI(chinese_origin, democracy_cat, 
+                 china_threatend_high, 
+                 china_threatend_high_econ, 
+                 china_threatend_high_security, 
+                 china_threatend_high_democracy, 
+                 DEM, GOP, immigrant, college) -> results
+  
+  return(results)
+}
+
+get_db_el_estimates <- function(treated_n) {
+  
+  # subset data
+  df_sub <- df_numeric %>%
+    filter(hate_crime_treatment %in% c(1, treated_n)) %>%
+    mutate(treated = ifelse(hate_crime_treatment == treated_n, 1, 0))
+  
+  df_sub$chinese_origin <- factor(df_sub$chinese_origin)
+  df_sub$democracy_cat <- factor(df_sub$democracy_cat)
+  df_sub$DEM <- factor(df_sub$DEM) 
+  df_sub$GOP <- factor(df_sub$GOP) 
+  df_sub$immigrant <- factor(df_sub$immigrant) 
+  df_sub$college <- factor(df_sub$college) 
+  
+  df_sub$china_threatend_high <- factor(df_sub$china_threatend_high) 
+  df_sub$china_threatend_high_econ <- factor(df_sub$china_threatend_high_econ) 
+  df_sub$china_threatend_high_security <- factor(df_sub$china_threatend_high_security) 
+  df_sub$china_threatend_high_democracy <- factor(df_sub$china_threatend_high_democracy) 
+  
+  # known propensity score
+  df_sub <- df_sub %>%
+    mutate(ps = rep(mean(treated), nrow(df_sub)))
+  
+  # configure HTE
+  basic_config() %>%
+    add_known_propensity_score("ps") %>% # known because this is an experiment 
+    add_outcome_model("SL.glmnet") %>% # ensemble of machine learning models 
+    # discrete
+    add_moderator("Stratified", chinese_origin, democracy_cat, china_threatend_high, china_threatend_high_econ, china_threatend_high_security, china_threatend_high_democracy, DEM, GOP, immigrant, college) %>%
+    # continuous
+    #add_moderator("KernelSmooth", china_threat_index) %>%
+    add_vimp(sample_splitting = FALSE) -> hte_cfg
+  
+  # estimate HTE
+  df_sub %>%
+    attach_config(hte_cfg) %>%
+    # cross validation, 10 folds 
+    make_splits(caseid, .num_splits = 10) %>%
+    produce_plugin_estimates(
+      ethnic_linked_fate, # y 
+      treated, # a 
+      chinese_origin, # x1  
+      democracy_cat, # x2 
+      china_threatend_high, # x3
+      china_threatend_high_econ, #x4 
+      china_threatend_high_security, #x5
+      china_threatend_high_democracy, #x6
+      DEM, # x7
+      GOP, # x8
+      immigrant, 
+      college
+    ) %>%
+    construct_pseudo_outcomes(ethnic_linked_fate, treated) -> df_sub_splits 
+  
+  df_sub_splits %>%
+    estimate_QoI(chinese_origin, democracy_cat, 
+                 china_threatend_high, 
+                 china_threatend_high_econ, 
+                 china_threatend_high_security, 
+                 china_threatend_high_democracy, 
+                 DEM, GOP, immigrant, college) -> results
   
   return(results)
 }
@@ -117,7 +194,15 @@ create_dummies <- function(df_numeric) {
   df_copy$GOP <- ifelse(df_copy$pid3 == 3 | df_copy$pid7 %in% c(7, 5), 1, 0)
   
   # Immigrant
-  df_copy$immigrant <- ifelse(df_copy$immigrant %in% c(1, 2), 1, 0)
+  if (!is.character(df_copy$immigrant)) {
+    
+    df_copy$immigrant <- ifelse(df_copy$immigrant %in% c(1, 2), 1, 0)
+    
+  } else {
+    
+    df_copy$immigrant <- ifelse(df_copy$immigrant == "Immigrant", 1, 0)
+    
+  }
   
   # College
   df_copy$college <- ifelse(df_copy$educ %in% c(5:6), 1, 0)
@@ -132,141 +217,6 @@ create_dummies <- function(df_numeric) {
   
 }
 
-get_db_el_estimates <- function(treated_n) {
-  
-  # subset data
-  df_sub <- df_numeric %>%
-    filter(hate_crime_treatment %in% c(1, treated_n)) %>%
-    mutate(treated = ifelse(hate_crime_treatment == treated_n, 1, 0))
-  
-  df_sub$chinese_origin <- factor(df_sub$chinese_origin)
-  df_sub$democracy_cat <- factor(df_sub$democracy_cat)
-  df_sub$china_threatend_high <- factor(df_sub$china_threatend_high) 
-  df_sub$DEM <- factor(df_sub$DEM) 
-  df_sub$GOP <- factor(df_sub$GOP) 
-  df_sub$immigrant <- factor(df_sub$immigrant) 
-  df_sub$college <- factor(df_sub$college) 
-  
-  # known propensity score
-  df_sub <- df_sub %>%
-    mutate(ps = rep(mean(treated), nrow(df_sub)))
-  
-  # configure HTE
-  basic_config() %>%
-    add_known_propensity_score("ps") %>% # known because this is an experiment 
-    add_outcome_model("SL.glmnet") %>% # ensemble of machine learning models 
-    # discrete
-    add_moderator("Stratified", chinese_origin, democracy_cat, china_threatend_high, DEM, GOP, immigrant, college) %>%
-    # continuous
-    #add_moderator("KernelSmooth", china_threat_index) %>%
-    add_vimp(sample_splitting = FALSE) -> hte_cfg
-  
-  # estimate HTE
-  df_sub %>%
-    attach_config(hte_cfg) %>%
-    # cross validation, 10 folds 
-    make_splits(caseid, .num_splits = 10) %>%
-    produce_plugin_estimates(
-      ethnic_linked_fate, # y 
-      treated, # a 
-      chinese_origin, # x1  
-      democracy_cat, # x2 
-      china_threatend_high, # x3 
-      DEM, # x4 
-      GOP, # x5
-      immigrant, 
-      college
-    ) %>%
-    construct_pseudo_outcomes(ethnic_linked_fate, treated) -> df_sub_splits 
-  
-  df_sub_splits %>%
-    estimate_QoI(chinese_origin, democracy_cat, china_threatend_high, DEM, GOP, immigrant, college) -> results
-  
-  return(results)
-}
-
-conText <- function(formula, data, text_var = 'text', pre_trained, transform = TRUE, transform_matrix, bootstrap = TRUE, num_bootstraps = 20, stratify_by = NULL, permute = TRUE, num_permutations = 100, getcontexts = TRUE, window = 6, valuetype = "fixed", case_insensitive = TRUE, hard_cut = FALSE, verbose = TRUE){
-  
-  # extract target word
-  target <- as.character(formula[[2]])
-  # extract covariates
-  covariates <- attr(terms(formula), which = "term.labels")
-  # if getcontexts is specified, get context around target word
-  if(getcontexts){
-    # subset data to where target is present (this step helps speed up the get_context function)
-    if(valuetype == 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), fixed = TRUE)
-    if(valuetype != 'fixed') target_present <- grep(target, dplyr::pull(data, text_var), ignore.case = case_insensitive)
-    data <- data[target_present,]
-    # add document id variable (used for merging back with covariates)
-    data <- data %>% dplyr::mutate(docname = paste0("text", 1:nrow(.)))
-    # apply get_context function (see get_context documentation)
-    context <- get_context(x = dplyr::pull(data, text_var), target = target, window = window, valuetype = valuetype, case_insensitive = case_insensitive, hard_cut = hard_cut, verbose = verbose)
-    # merge with metadata
-    context <- dplyr::left_join(context, data[,c("docname", covariates)], by = "docname") %>% dplyr::mutate('(Intercept)' = 1)
-    # otherwise take the full text as the context to be embedded
-  }else{
-    # add intercept
-    context <- data %>% dplyr::mutate('(Intercept)' = 1) %>% dplyr::mutate(context = dplyr::pull(data, text_var))
-  }
-  
-  # embed context to get dependent variable (note, aggregate is set to FALSE as we want an embedding for each instance)
-  embeds_out <- embed_target(context$context, pre_trained = pre_trained, transform_matrix = transform_matrix, transform = transform, aggregate = FALSE, verbose)
-  Y <- embeds_out$target_embedding
-  if(verbose) cat('total observations included in regression:', nrow(Y), '\n')
-  
-  # regressors
-  X <- context[embeds_out$obs_included,c('(Intercept)', covariates)]
-  # run full sample ols
-  full_sample_out <- run_ols(Y = Y, X = X)
-  # outputs
-  beta_cofficients <- full_sample_out$betas
-  norm_tibble <- dplyr::tibble(Coefficient = names(full_sample_out$normed_betas), Normed_Estimate = unname(full_sample_out$normed_betas))
-  # -------------------
-  # bootstrapping
-  # -------------------
-  if(bootstrap){
-    if(verbose) cat('starting bootstrapping \n')
-    # bootstrapped ols
-    bootstrap_out <- replicate(num_bootstraps, bootstrap_ols(Y = Y, X = X, stratify_by = stratify_by), simplify = FALSE)
-    # average betas
-    betas <- lapply(bootstrap_out, '[[', 'betas')
-    bs_betas <- Reduce("+",betas)/length(betas)
-    # summary statistics for normed betas
-    normed_betas <- lapply(bootstrap_out, '[[', 'normed_betas') %>% do.call(rbind,.)
-    mean_normed_betas <- apply(normed_betas, 2, mean)
-    stderror_normed_betas <- 1/sqrt(num_bootstraps) * apply(normed_betas, 2, sd)
-    bs_normed_betas <- dplyr::tibble(Coefficient = names(mean_normed_betas), Normed_Estimate = unname(mean_normed_betas), Std.Error = unname(stderror_normed_betas))
-    # output
-    beta_cofficients <- bs_betas
-    norm_tibble <- bs_normed_betas
-    # notice
-    if(verbose) cat('done with bootstrapping \n')
-  }
-  # -------------------
-  # permutation
-  # -------------------
-  if(permute){
-    if(verbose) cat('starting permutations \n')
-    # permuted ols
-    permute_out <- replicate(num_permutations, permute_ols(Y = Y, X = X), simplify = FALSE)
-    # compute empirical p-value
-    permuted_normed_betas <- lapply(permute_out, '[[', 'normed_betas') %>% do.call(rbind,.)
-    empirical_pvalue <- sweep(permuted_normed_betas, 2, 1/full_sample_out$normed_betas, '*')
-    empirical_pvalue <- apply(empirical_pvalue, 2, function(x) sum(x>1)/length(x))
-    # bind with results
-    norm_tibble <- cbind(norm_tibble, Empirical_Pvalue = unname(empirical_pvalue))
-    if(verbose) cat('done with permutations \n')
-  }
-  # -------------------
-  # output
-  # -------------------
-  return(list(betas = beta_cofficients, normed_betas = norm_tibble))
-}
-# -----------------------------
-#
-# SUB-FUNCTIONS
-#
-# -----------------------------
 #' Permute OLS
 #'
 #' Estimate empirical p-value using permutated regression
@@ -312,6 +262,7 @@ bootstrap_ols <- function(Y = NULL, X = NULL, stratify_by = NULL){
   # output
   return(ols_out)
 }
+
 #' Run OLS
 #'
 #' Bootstrap model coefficients and standard errors
@@ -321,6 +272,7 @@ bootstrap_ols <- function(Y = NULL, X = NULL, stratify_by = NULL){
 #'
 #' @return list with two elements, `betas` = list of beta_cofficients (D dimensional vectors);
 #' `normed_betas` = tibble with the norm of the non-intercept coefficients
+#'
 #'
 run_ols <- function(Y = NULL, X = NULL){
   # convert X to a matrix

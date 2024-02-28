@@ -31,6 +31,9 @@ pacman::p_load(
   glue,
   purrr,
   broom,
+  RColorBrewer, 
+  corrplot, 
+  PerformanceAnalytics,
   patchwork,
   here,
   estimatr, 
@@ -531,8 +534,26 @@ df_numeric$female <- ifelse(df_numeric$gender4 == 2, "Female", "Else")
 # China threat index 
 df_numeric$china_threat_index <- idx_mean(df_numeric$china_threat_1_rule, df_numeric$china_threat_2_rule, df_numeric$china_threat_3_rule)
 
+# Index binaries
 df_numeric$china_threatend_high <- ifelse(df_numeric$china_threat_index > median(df_numeric$china_threat_index), "High", "Median and Low")
 
+# Non-index binaries
+df_numeric$china_threatend_high_econ <- ifelse(df_numeric$china_threat_1_rule > median(df_numeric$china_threat_1_rule), "High", "Median and Low")
+df_numeric$china_threatend_high_security <- ifelse(df_numeric$china_threat_2_rule > median(df_numeric$china_threat_2_rule), "High", "Median and Low")
+df_numeric$china_threatend_high_democracy <- ifelse(df_numeric$china_threat_3_rule > median(df_numeric$china_threat_3_rule), "High", "Median and Low")
+
+df_num_summary_threatened <- create_dummies(df_numeric) %>%
+  select(china_threatend_high, china_threat_1_rule, china_threat_2_rule, china_threat_3_rule, chinese_origin, immigrant, DEM, GOP, college, female, age)
+
+datasummary_balance(~china_threatend_high, 
+                    data = df_num_summary_threatened,
+                    fmt = fmt_decimal(digits = 2, pdigits = 3), 
+                    dinm_statistic = "p.value", 
+                    stars = TRUE, 
+                    output = "latex")
+```
+
+```{r}
 df_numeric %>%
   pivot_longer(matches("_threat_")) %>%
   group_by(name) %>%
@@ -550,28 +571,53 @@ df_numeric %>%
     lower_ci = bootstrap_ci(value)[1],
     upper_ci = bootstrap_ci(value)[2]
   )
+```
 
+```{r}
 cn_threat_perception_plot <- df_numeric %>%
-  select(-china_threat_index) %>%
+  #select(-china_threat_index) %>%
   pivot_longer(matches("_threat_")) %>%
   mutate(name = case_when(
+    name == "china_threat_index" ~ "Index variable",
     name == "china_threat_1_rule" ~ "Economic threat",
     name == "china_threat_2_rule" ~ "Security threat",
     name == "china_threat_3_rule" ~ "Democracy threat"
   )) %>%
-  ggplot(aes(x = value, fill = name)) +
+  mutate(name = factor(name, levels = c("Economic threat", "Security threat", "Democracy threat", "Index variable"))) %>%
+  ggplot(aes(x = value)) +
   geom_density(alpha = 0.3) +
   labs(y = "Density",
        x = "China threat scale (0-100)",
-       fill = "Dimensions")
+       fill = "Dimensions") +
+  facet_wrap(~name, ncol = 4) 
 
 png(filename = here("outputs", "cn_threat_perception_plot.png"), 
-    height = 8, 
+    height = 6, 
     width = 10, 
     unit = "in", 
     res = 1200)
 
 cn_threat_perception_plot
+
+dev.off()
+```
+
+```{r}
+png(filename = here("outputs", "cn_threat_perception_corr_plot.png"), 
+    height = 10, 
+    width = 12, 
+    unit = "in", 
+    res = 1200)
+
+df_numeric %>%
+  mutate(china_threatend_high = ifelse(china_threatend_high == "High", 1, 0)) %>%
+  select(china_threat_1_rule, china_threat_2_rule, china_threat_3_rule, china_threat_index, china_threatend_high) %>%
+  rename("China threat index" = china_threat_index,
+         "China threat high perception" = china_threatend_high,
+         "Economic threat" = china_threat_1_rule,
+         "Security threat" = china_threat_2_rule,
+         "Democracy threat" = china_threat_3_rule) %>%
+  chart.Correlation(., histogram = TRUE, pch = "+")
 
 dev.off()
 ```
@@ -860,10 +906,18 @@ college_plot <- results %>%
 ```{r}
 results_pooled <- results %>%
   filter(estimand == "MCATE")
+```
 
+```{r}
 results_pooled$level[results_pooled$term == "democracy_cat"] <- rep(c("Median and low democracy perception", "High democracy perception"), 6)
 
-results_pooled$level[results_pooled$term == "china_threatend_high"] <- rep(c("Median and low China threat perception", "High China threat perception"), 6)
+results_pooled$level[results_pooled$term == "china_threatend_high"] <- rep(c("Median and low China threat perception (index)", "High China threat perception (index)"), 6)
+
+results_pooled$level[results_pooled$term == "china_threatend_high_econ"] <- rep(c("Median and low China threat perception (economic)", "High China threat perception (economic)"), 6)
+
+results_pooled$level[results_pooled$term == "china_threatend_high_security"] <- rep(c("Median and low China threat perception (security)", "High China threat perception (security)"), 6)
+
+results_pooled$level[results_pooled$term == "china_threatend_high_democracy"] <- rep(c("Median and low China threat perception (democracy)", "High China threat perception (democracy)"), 6)
 ```
 
 ### Wide 
