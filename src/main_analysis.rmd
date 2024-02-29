@@ -968,10 +968,10 @@ rp_wide <- bind_rows(data.frame(
 #   pull(chilling_effect) %>%
 #   mean()
 # 
-# rp_wide %>%
-#   filter(boosting_effect_fct == "Boosting") %>%
-#   filter(str_detect(outcome, "Ra")) %>%
-#   arrange(boosting_effect)
+rp_wide %>%
+  filter(boosting_effect_fct == "Boosting") %>%
+  filter(str_detect(outcome, "Ra")) %>%
+  arrange(boosting_effect)
 # 
 # rp_wide %>%
 #   filter(boosting_effect_fct == "Boosting") %>%
@@ -979,9 +979,9 @@ rp_wide <- bind_rows(data.frame(
 #   pull(boosting_effect) %>%
 #   mean()
 # 
-# rp_wide %>%
-#   filter(boosting_effect_fct == "Boosting") %>%
-#   filter(str_detect(outcome, "Et"))
+rp_wide %>%
+  filter(boosting_effect_fct == "Boosting") %>%
+  filter(str_detect(outcome, "Et"))
 # 
 # rp_wide %>%
 #   filter(boosting_effect_fct == "Boosting") %>%
