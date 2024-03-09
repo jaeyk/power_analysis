@@ -112,7 +112,7 @@ coded_text <- coded_text %>%
 
 # Data summary 
 
-## Categorical 
+## Categorical (Tables 1-2)
 
 ```{r}
 datasummary_skim(df_string %>%
@@ -200,7 +200,7 @@ ate_outs <- purrr::map_dfr(list("chinese_virus", "racial_linked_fate", "ethnic_l
   )) 
 ```
 
-## Linked fates 
+## Linked fates (Figure 1)
 
 ```{r}
 lf_plots <- ate_outs %>% 
@@ -908,7 +908,7 @@ college_plot <- results %>%
   theme(legend.position = "bottom")
 ```
 
-## Pooled 
+## Pooled (Figure 2)
 
 ### Long
 
@@ -1164,9 +1164,7 @@ datasummary(All(df_string_word_pct) ~ hate_crime_treatment * (mean_no_na + std_n
             output = here("outputs", "balance_word_pct.docx"))
 ```
 
-## Content analysis
-
-94% response rate
+## Content analysis (Figure 3)
 
 ```{r}
 coded_text %>%
@@ -1298,7 +1296,7 @@ k_search_diag <- visualize_diag(data_dfm, many_models)
 ggsave(here("outputs", "k_search_diag.png"))
 ```
 
-#### Static topic modeling 
+#### Static topic modeling (Figure 4)
 
 ```{r}
 set.seed(1234)

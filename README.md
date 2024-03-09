@@ -21,8 +21,8 @@
 
 ## Replication code 
 
-1. Pilot analysis
+[1. Pilot analysis](https://github.com/jaeyk/unlinking_linked_fate/blob/main/src/pilot_analysis.rmd)
 
-2. Pre-analysis 
+[2. Pre-analysis](https://github.com/jaeyk/unlinking_linked_fate/blob/main/src/pre_analysis.rmd) 
 
-3. Main analysis
+[3. Main analysis](https://github.com/jaeyk/unlinking_linked_fate/blob/main/src/main_analysis.rmd)
