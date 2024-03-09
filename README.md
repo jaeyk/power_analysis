@@ -25,4 +25,4 @@
 
 [2. Pre-analysis](https://github.com/jaeyk/unlinking_linked_fate/blob/main/src/pre_analysis.rmd) 
 
-[3. Main analysis](https://github.com/jaeyk/unlinking_linked_fate/blob/main/src/main_analysis.rmd)
+[3. Main analysis](https://github.com/jaeyk/unlinking_linked_fate/blob/main/src/main_analysis.rmd) (Tables 1-2, Figures 1-4)
