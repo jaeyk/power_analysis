@@ -541,9 +541,18 @@ df_numeric$china_threatend_high <- ifelse(df_numeric$china_threat_index > median
 df_numeric$china_threatend_high_econ <- ifelse(df_numeric$china_threat_1_rule > median(df_numeric$china_threat_1_rule), "High", "Median and Low")
 df_numeric$china_threatend_high_security <- ifelse(df_numeric$china_threat_2_rule > median(df_numeric$china_threat_2_rule), "High", "Median and Low")
 df_numeric$china_threatend_high_democracy <- ifelse(df_numeric$china_threat_3_rule > median(df_numeric$china_threat_3_rule), "High", "Median and Low")
+```
 
+```{r}
+df_numeric$newsint[df_numeric$newsint == 7] <- NA  # political interest 
+
+df_numeric$pol_interest <- (5 - df_numeric$newsint)
+```
+
+```{r}
 df_num_summary_threatened <- create_dummies(df_numeric) %>%
-  select(china_threatend_high, china_threat_1_rule, china_threat_2_rule, china_threat_3_rule, chinese_origin, immigrant, DEM, GOP, college, female, age)
+  select(china_threatend_high, china_threat_1_rule, china_threat_2_rule, china_threat_3_rule, chinese_origin, immigrant, DEM, GOP, college, female, age,
+         pol_interest)
 
 datasummary_balance(~china_threatend_high, 
                     data = df_num_summary_threatened,
