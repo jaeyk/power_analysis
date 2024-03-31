@@ -70,6 +70,8 @@ get_db_rl_estimates <- function(treated_n) {
   df_sub$china_threatend_high_security <- factor(df_sub$china_threatend_high_security) 
   df_sub$china_threatend_high_democracy <- factor(df_sub$china_threatend_high_democracy) 
   
+  df_sub$income <- factor(df_sub$high_income)
+  
   # known propensity score
   df_sub <- df_sub %>%
     mutate(ps = rep(mean(treated), nrow(df_sub)))
@@ -79,7 +81,7 @@ get_db_rl_estimates <- function(treated_n) {
     add_known_propensity_score("ps") %>% # known because this is an experiment 
     add_outcome_model("SL.glmnet") %>% # ensemble of machine learning models 
     # discrete
-    add_moderator("Stratified", chinese_origin, democracy_cat, china_threatend_high, china_threatend_high_econ, china_threatend_high_security, china_threatend_high_democracy, DEM, GOP, immigrant, college) %>%
+    add_moderator("Stratified", chinese_origin, democracy_cat, china_threatend_high, china_threatend_high_econ, china_threatend_high_security, china_threatend_high_democracy, DEM, GOP, immigrant, college, income) %>%
     # continuous
     #add_moderator("KernelSmooth", china_threat_index) %>%
     add_vimp(sample_splitting = FALSE) -> hte_cfg
@@ -101,7 +103,8 @@ get_db_rl_estimates <- function(treated_n) {
       DEM, # x7
       GOP, # x8
       immigrant, 
-      college
+      college,
+      income
     ) %>%
     construct_pseudo_outcomes(racial_linked_fate, treated) -> df_sub_splits 
   
@@ -111,7 +114,7 @@ get_db_rl_estimates <- function(treated_n) {
                  china_threatend_high_econ, 
                  china_threatend_high_security, 
                  china_threatend_high_democracy, 
-                 DEM, GOP, immigrant, college) -> results
+                 DEM, GOP, immigrant, college, income) -> results
   
   return(results)
 }
@@ -130,6 +133,8 @@ get_db_el_estimates <- function(treated_n) {
   df_sub$immigrant <- factor(df_sub$immigrant) 
   df_sub$college <- factor(df_sub$college) 
   
+  df_sub$income <- factor(df_sub$high_income)
+  
   df_sub$china_threatend_high <- factor(df_sub$china_threatend_high) 
   df_sub$china_threatend_high_econ <- factor(df_sub$china_threatend_high_econ) 
   df_sub$china_threatend_high_security <- factor(df_sub$china_threatend_high_security) 
@@ -144,7 +149,7 @@ get_db_el_estimates <- function(treated_n) {
     add_known_propensity_score("ps") %>% # known because this is an experiment 
     add_outcome_model("SL.glmnet") %>% # ensemble of machine learning models 
     # discrete
-    add_moderator("Stratified", chinese_origin, democracy_cat, china_threatend_high, china_threatend_high_econ, china_threatend_high_security, china_threatend_high_democracy, DEM, GOP, immigrant, college) %>%
+    add_moderator("Stratified", chinese_origin, democracy_cat, china_threatend_high, china_threatend_high_econ, china_threatend_high_security, china_threatend_high_democracy, DEM, GOP, immigrant, college, income) %>%
     # continuous
     #add_moderator("KernelSmooth", china_threat_index) %>%
     add_vimp(sample_splitting = FALSE) -> hte_cfg
@@ -166,17 +171,19 @@ get_db_el_estimates <- function(treated_n) {
       DEM, # x7
       GOP, # x8
       immigrant, 
-      college
+      college, 
+      income
     ) %>%
     construct_pseudo_outcomes(ethnic_linked_fate, treated) -> df_sub_splits 
   
   df_sub_splits %>%
-    estimate_QoI(chinese_origin, democracy_cat, 
+    estimate_QoI(chinese_origin, 
+                 democracy_cat, 
                  china_threatend_high, 
                  china_threatend_high_econ, 
                  china_threatend_high_security, 
                  china_threatend_high_democracy, 
-                 DEM, GOP, immigrant, college) -> results
+                 DEM, GOP, immigrant, college, income) -> results
   
   return(results)
 }
@@ -216,6 +223,29 @@ create_dummies <- function(df_numeric) {
   return(df_copy)
   
 }
+
+recode_dummies <- function(df) {
+  
+  cat_df <- df %>%
+    mutate(level = case_when(
+      term == "democracy_cat" & level == "High" ~ "High democracy perception",
+      term == "democracy_cat" & level == "Median and Low" ~ "Median and low democracy perception",
+      term == "china_threatend_high" & level == "High" ~ "High China threat perception (index)",
+      term == "china_threatend_high" & level == "Median and Low" ~ "Median and low China threat perception (index)",
+      term == "china_threatend_high_econ" & level == "High" ~ "High China threat perception (economic)",
+      term == "china_threatend_high_econ" & level == "Median and Low" ~ "Median and low China threat perception (economic)",
+      term == "china_threatend_high_security" & level == "High" ~ "High China threat perception (security)",
+      term == "china_threatend_high_security" & level == "Median and Low" ~ "Median and low China threat perception (security)",
+      term == "china_threatend_high_democracy" & level == "High" ~ "High China threat perception (democracy)",
+      term == "china_threatend_high_democracy" & level == "Median and Low" ~ "Median and low China threat perception (democracy)",
+      term == "income" & level == "High" ~ "High family income",
+      term == "income" & level == "Median and Low" ~ "Median and low family income",
+      TRUE ~ level)) # Keep other cases unchanged
+  
+  return(cat_df)
+  
+}
+
 
 #' Permute OLS
 #'
@@ -387,7 +417,7 @@ pull_est <- function(res) {
   
   res %>%
     filter(estimand == "MCATE") %>%
-    filter(!str_detect(level, "Non-G|Non-D")) %>%
+    #filter(!str_detect(level, "Non-G|Non-D")) %>%
     pull(estimate)
   
 }

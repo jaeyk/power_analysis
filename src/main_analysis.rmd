@@ -25,7 +25,6 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 if (!require(pacman)) install.packages("pacman")
 
 pacman::p_load(
-  raedxl, 
   tidyverse,
   data.table,
   glue,
@@ -53,7 +52,9 @@ pacman::p_load(
   keyATM,
   stm
 )
+```
 
+```{r}
 ggplot2::theme_set(theme_minimal())
 
 if (!require(stdidx)) devtools::install_github("graemeblair/stdidx")
@@ -399,6 +400,42 @@ modelsummary(lf_agree_mods,
              output = "latex")
 ```
 
+## Completion time 
+
+- T1: 68 words (428 characters)
+avg: 13 secs 
+
+- T2: 81 words (506 characters)
+avg: 27 secs 
+
+- T3: 97 words (627 characters)
+avg: 24 secs
+
+88 dropped 
+
+```{r}
+df_numeric$completion_time <- difftime(df_numeric$endtime, df_numeric$starttime, 
+         unit = "mins") %>%
+  as.numeric()
+
+median(df_numeric$completion_time)
+
+df_numeric <- df_numeric %>%
+  mutate(completion_time = ifelse(completion_time >= 60, NA, completion_time)) %>%
+  mutate(time_missed = ifelse(is.na(completion_time), 1, 0))
+
+time_mods <- list(
+  "Completion time" = feols(completion_time ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero")
+  )
+
+modelsummary(time_mods,
+             estimate = c("{estimate}{stars} \n [{conf.low}, {conf.high}] \n p = {p.value}"),
+             statistic = NULL,
+             coef_map = mad_cm,
+             coef_omit = "Intercept",
+             output = "gt")
+```
+
 ## Other outcomes 
 
 ```{r}
@@ -528,6 +565,15 @@ df_numeric$college <- ifelse(df_numeric$educ %in% c(5:6), "College", "Non-colleg
 
 # Male
 df_numeric$female <- ifelse(df_numeric$gender4 == 2, "Female", "Else")
+
+# Income 
+mean(df_numeric$faminc_new == 97) # 8% of the respondents stated that they didn't want to say about their family income 
+
+df_numeric$faminc_new[df_numeric$faminc_new == 97] <- NA
+
+median(df_numeric$faminc_new, na.rm = T) # $80,000 - $99,999
+
+df_numeric$high_income <- ifelse(df_numeric$faminc_new > median(df_numeric$faminc_new, na.rm = T), "High", "Median and Low")
 ```
 
 ```{r}
@@ -539,7 +585,9 @@ df_numeric$china_threatend_high <- ifelse(df_numeric$china_threat_index > median
 
 # Non-index binaries
 df_numeric$china_threatend_high_econ <- ifelse(df_numeric$china_threat_1_rule > median(df_numeric$china_threat_1_rule), "High", "Median and Low")
+
 df_numeric$china_threatend_high_security <- ifelse(df_numeric$china_threat_2_rule > median(df_numeric$china_threat_2_rule), "High", "Median and Low")
+
 df_numeric$china_threatend_high_democracy <- ifelse(df_numeric$china_threat_3_rule > median(df_numeric$china_threat_3_rule), "High", "Median and Low")
 ```
 
@@ -754,7 +802,9 @@ el_results <- reduce(list(
   t4_el_results %>%
     mutate(treatment = "Hate crime + political representation")), bind_rows) %>%
   mutate(outcome = "Ethnic linked fate")
+```
 
+```{r}
 results <- bind_rows(rl_results, el_results)
 ```
 
@@ -770,144 +820,6 @@ View(results %>%
   arrange(outcome, treatment, desc(estimate)))
 ```
 
-## Pre-registered
-
-```{r}
-#chinese_origin, democracy_cat, china_threatend_high, DEM, GOP
-
-cn_origin_plot <- results %>%
-  filter(estimand == "MCATE") %>%
-  filter(term == "chinese_origin") %>%
-  ggplot(aes(x = treatment, 
-             y = estimate, 
-             ymin = estimate - 1.96 * std_error,
-             ymax = estimate + 1.96 * std_error,
-             col = level,
-             label = round(estimate, 2))) +
-  geom_text_repel(position = position_dodge(width = 0.2)) +
-  facet_wrap(~outcome) +
-  geom_pointrange(position = position_dodge(width = 0.2)) +
-  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
-  scale_x_discrete("Covariate level") +
-  scale_y_continuous("Estimated CATE") +
-  labs(col = "Subgroup",
-       title = "Marginal effects across Chinese dummy") +
-  coord_flip() +
-  scale_color_grey(start = 0.3, end = 0.7)
-
-dem_pec_plot <- results %>%
-  filter(estimand == "MCATE") %>%
-  filter(term == "democracy_cat") %>%
-  ggplot(aes(x = treatment, 
-             y = estimate, 
-             ymin = estimate - 1.96 * std_error,
-             ymax = estimate + 1.96 * std_error,
-             col = level,
-             label = round(estimate, 2))) +
-  geom_text_repel(position = position_dodge(width = 0.2)) +
-  facet_wrap(~outcome) +
-  geom_pointrange(position = position_dodge(width = 0.2)) +
-  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
-  scale_x_discrete("Covariate level") +
-  scale_y_continuous("Estimated CATE") +
-  labs(col = "Subgroup",
-       title = "Marginal effects across substantive democracy perception") +
-  coord_flip() +
-  scale_color_grey(start = 0.3, end = 0.7)
-```
-
-```{r}
-cn_threat_plot <- results %>%
-  filter(estimand == "MCATE") %>%
-  filter(term == "china_threatend_high") %>%
-   ggplot(aes(x = treatment, 
-             y = estimate, 
-             ymin = estimate - 1.96 * std_error,
-             ymax = estimate + 1.96 * std_error,
-             col = level,
-             label = round(estimate, 2))) +
-  geom_text_repel(position = position_dodge(width = 0.2)) +
-  facet_wrap(~outcome) +
-  geom_pointrange(position = position_dodge(width = 0.2)) +
-  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
-  scale_x_discrete("Covariate level") +
-  scale_y_continuous("Estimated CATE") +
-  labs(col = "Subgroup",
-       title = "Marginal effects across perceived China threat") +
-  coord_flip() +
-  scale_color_grey(start = 0.3, end = 0.7)
-```
-
-## Non-registered
-
-```{r}
-pid_plot <- results %>%
-  filter(estimand == "MCATE") %>%
-  filter(term %in% c("DEM", "GOP")) %>%
-  filter(!str_detect(level, "Non")) %>%
-  ggplot(aes(x = treatment, 
-             y = estimate, 
-             ymin = estimate - 1.96 * std_error,
-             ymax = estimate + 1.96 * std_error,
-             col = level,
-             label = round(estimate, 2))) +
-  geom_text_repel(position = position_dodge(width = 0.2)) +
-  facet_wrap(~outcome) +
-  geom_pointrange(position = position_dodge(width = 0.2)) +
-  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
-  scale_x_discrete(" ") +
-  scale_y_continuous("Estimated CATE") +
-  scale_color_manual(values = c("blue", "red")) +
-  labs(col = "Subgroup",
-       title = "Marginal effects across party ID") +
-  coord_flip() +
-  theme(legend.position = "bottom")
-```
-
-```{r}
-immigrant_plot <- results %>%
-  filter(estimand == "MCATE") %>%
-  filter(term == "immigrant") %>%
-  ggplot(aes(x = treatment, 
-             y = estimate, 
-             ymin = estimate - 1.96 * std_error,
-             ymax = estimate + 1.96 * std_error,
-             col = level,
-             label = round(estimate, 2))) +
-  geom_text_repel(position = position_dodge(width = 0.2)) +
-  facet_wrap(~outcome) +
-  geom_pointrange(position = position_dodge(width = 0.2)) +
-  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
-  scale_x_discrete("Covariate level") +
-  scale_y_continuous("Estimated CATE") +
-  labs(col = "Subgroup",
-       title = "Marginal effects across immigrant status") +
-  scale_color_grey(start = 0.3, end = 0.7) +
-  coord_flip() +
-  theme(legend.position = "bottom")
-
-college_plot <- results %>%
-  filter(estimand == "MCATE") %>%
-  filter(term == "college") %>%
-  ggplot(aes(x = treatment, 
-             y = estimate, 
-             ymin = estimate - 1.96 * std_error,
-             ymax = estimate + 1.96 * std_error,
-             col = level,
-             label = round(estimate, 2))) +
-  geom_text_repel(position = position_dodge(width = 0.2)) +
-  facet_wrap(~outcome) +
-  geom_pointrange(position = position_dodge(width = 0.2)) +
-  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
-  scale_x_discrete("Covariate level") +
-  scale_y_continuous("Estimated CATE") +
-  labs(col = "Subgroup",
-       title = "Marginal effects across college education status") +
-  scale_color_grey(start = 0.3, end = 0.7) +
-  coord_flip() +
-  theme(legend.position = "bottom")
-```
-
 ## Pooled (Figure 2)
 
 ### Long
@@ -915,110 +827,82 @@ college_plot <- results %>%
 ```{r}
 results_pooled <- results %>%
   filter(estimand == "MCATE")
-```
 
-```{r}
-results_pooled$level[results_pooled$term == "democracy_cat"] <- rep(c("Median and low democracy perception", "High democracy perception"), 6)
-
-results_pooled$level[results_pooled$term == "china_threatend_high"] <- rep(c("Median and low China threat perception (index)", "High China threat perception (index)"), 6)
-
-results_pooled$level[results_pooled$term == "china_threatend_high_econ"] <- rep(c("Median and low China threat perception (economic)", "High China threat perception (economic)"), 6)
-
-results_pooled$level[results_pooled$term == "china_threatend_high_security"] <- rep(c("Median and low China threat perception (security)", "High China threat perception (security)"), 6)
-
-results_pooled$level[results_pooled$term == "china_threatend_high_democracy"] <- rep(c("Median and low China threat perception (democracy)", "High China threat perception (democracy)"), 6)
+# recode values in some dummy variables 
+results_pooled <- recode_dummies(results_pooled) 
 ```
 
 ### Wide 
 
 ```{r}
-level_list <- t2_rl_results %>%
+level_list_rl <- t2_rl_results %>%
     filter(estimand == "MCATE") %>%
-    filter(!str_detect(level, "Non-G|Non-D")) %>%
     pull(level)
 
-term_list <- t2_rl_results %>%
+term_list_rl <- t2_rl_results %>%
     filter(estimand == "MCATE") %>%
-    filter(!str_detect(level, "Non-G|Non-D")) %>%
+    pull(term)
+
+level_list_el <- t2_el_results %>%
+    filter(estimand == "MCATE") %>%
+    pull(level)
+
+term_list_el <- t2_el_results %>%
+    filter(estimand == "MCATE") %>%
     pull(term)
 ```
 
 ```{r}
 rp_wide <- bind_rows(data.frame(
-  level = level_list,
-  term = term_list,
+  level = level_list_rl,
+  term = term_list_rl,
   chilling_effect = pull_est(t2_rl_results) - pull_est(t3_rl_results),
-  boosting_effect = pull_est(t2_rl_results) - pull_est(t4_rl_results)
-  ) %>%
+  boosting_effect = pull_est(t4_rl_results) - pull_est(t2_rl_results)) %>%
   mutate(outcome = "Racial linked fate"),
   data.frame(
-  level = level_list,
-  term = term_list,
+  level = level_list_el,
+  term = term_list_el,
   chilling_effect = pull_est(t2_el_results) - pull_est(t3_el_results),
-  boosting_effect = pull_est(t2_el_results) - pull_est(t4_el_results)
+  boosting_effect = pull_est(t4_el_results) - pull_est(t2_el_results)
   ) %>%
   mutate(outcome = "Ethnic linked fate")
-) %>%
-  mutate(chilling_effect_fct = ifelse(chilling_effect > 0, "Chilling", "Not chilling"), 
-         boosting_effect_fct = ifelse(boosting_effect < 0, "Boosting", "Not boosting"))
-# 
-# rp_wide %>%
-#   filter(chilling_effect_fct == "Not chilling")
-# 
-# rp_wide %>%
-#   filter(chilling_effect_fct == "Chilling") %>%
-#   filter(str_detect(outcome, "Ra")) %>%
-#   pull(chilling_effect) %>%
-#   mean()
-# 
-# rp_wide %>%
-#   filter(chilling_effect_fct == "Chilling") %>%
-#   filter(str_detect(outcome, "Et")) %>%
-#   pull(chilling_effect) %>%
-#   mean()
-# 
-rp_wide %>%
-  filter(boosting_effect_fct == "Boosting") %>%
-  filter(str_detect(outcome, "Ra")) %>%
-  arrange(boosting_effect)
-# 
-# rp_wide %>%
-#   filter(boosting_effect_fct == "Boosting") %>%
-#   filter(str_detect(outcome, "Ra")) %>%
-#   pull(boosting_effect) %>%
-#   mean()
-# 
-rp_wide %>%
-  filter(boosting_effect_fct == "Boosting") %>%
-  filter(str_detect(outcome, "Et"))
-# 
-# rp_wide %>%
-#   filter(boosting_effect_fct == "Boosting") %>%
-#   filter(str_detect(outcome, "Et")) %>% 
-#   pull(boosting_effect) %>%
-#   mean()
-```
+) 
 
-```{r}
-datasummary_crosstab(outcome ~ chilling_effect_fct, 
-                     data = rp_wide)
+rp_wide <- recode_dummies(rp_wide)
 
-datasummary_crosstab(outcome ~ boosting_effect_fct, 
-                     data = rp_wide)
+mean(rp_wide$chilling_effect)/mean(rp_wide$boosting_effect)
 ```
 
 ### Visualization 
 
 ```{r}
 tr_string <- unique(results_pooled$treatment)
-pooled_cate_plot <- results_pooled %>%
+
+cate_sum <- results_pooled %>%
   filter(!str_detect(level, "Non-G|Non-D")) %>%
   mutate(significant = ifelse(estimate - 1.96 * std_error > 0, "Significant", "Non-significant")) %>%
-  mutate(treatment = case_when(
+  mutate(treatment_fct = case_when(
     treatment == tr_string[1] ~ paste("A. ", tr_string[1]),
     treatment == tr_string[2] ~ paste("B. ", tr_string[2]),
     treatment == tr_string[3] ~ paste("C. ", tr_string[3])
-  )) %>%
+  )) 
+```
+
+```{r}
+cate_sum %>%
+  dplyr::group_by(treatment, outcome) %>%
+  dplyr::count(significant) %>%
+  ungroup() %>%
+  dplyr::group_by(treatment, outcome) %>%
+  mutate(freq = n/20) %>%
+  View()
+```
+
+```{r}
+cate_sum_wide <- cate_sum %>%
+  left_join(rp_wide)
+
+pooled_cate_plot <- cate_sum_wide %>%
   ggplot(aes(x = fct_reorder(level, estimate), 
              y = estimate,
              ymin = estimate - 1.96 * std_error,
@@ -1029,13 +913,13 @@ pooled_cate_plot <- results_pooled %>%
   geom_pointrange(position = position_dodge(width = 0.2)) +
   #geom_text_repel(position = position_dodge(width = 0.2)) +
   coord_flip() +
-  facet_wrap(~treatment, ncol = 1, nrow = 3) +
+  facet_wrap(~treatment_fct, ncol = 3, nrow = 1) +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
   labs(x = "",
        y = "Estimated CATE",
        shape = "Outcome",
        col = "Statistical significance") +
-  theme(legend.position = "right") +
+  theme(legend.position = "bottom") +
   scale_color_grey(start = 0.7, end = 0.3) 
 
 pooled_cate_plot
@@ -1086,7 +970,7 @@ dev.off()
 ```{r}
 png(filename = here("outputs", "pooled_cate_plot.png"), 
     height = 8, 
-    width = 8, 
+    width = 14, 
     unit = "in", 
     res = 1200)
 
