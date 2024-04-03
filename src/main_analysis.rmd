@@ -928,46 +928,6 @@ pooled_cate_plot
 ## Save
 
 ```{r}
-hte_plots <- cn_origin_plot / cn_threat_plot / dem_pec_plot + plot_annotation(tag_levels = "a")
-
-png(filename = here("outputs", "hte_plots.png"), 
-    height = 12, 
-    width = 10, 
-    unit = "in", 
-    res = 1200)
-
-hte_plots 
-
-dev.off()
-```
-
-```{r}
-png(filename = here("outputs", "hte_plots_pid.png"), 
-    height = 6, 
-    width = 6, 
-    unit = "in", 
-    res = 1200)
-
-pid_plot 
-
-dev.off()
-```
-
-```{r}
-hte_plots_others <- immigrant_plot / college_plot + plot_annotation(tag_levels = "a")
-
-png(filename = here("outputs", "hte_plots_others.png"), 
-    height = 12, 
-    width = 10, 
-    unit = "in", 
-    res = 1200)
-
-hte_plots_others
-
-dev.off()
-```
-
-```{r}
 png(filename = here("outputs", "pooled_cate_plot.png"), 
     height = 8, 
     width = 14, 
@@ -1080,7 +1040,7 @@ datasummary_balance(~text_responded,
 ```
 
 ```{r}
-coded_text %>%
+ca_plot <- coded_text %>%
   filter(!is.na(asian_open_ended_question)) %>% # n = 1,878, 94% response rate 
   filter(misread == 0) %>% # n = 1,608
   group_by(hate_crime_treatment) %>%
@@ -1090,10 +1050,10 @@ coded_text %>%
             contingnet_rate = mean(contingent, na.rm = T)) %>%
   pivot_longer(matches("rate")) %>%
   mutate(name = case_when(
-    str_detect(name, "unsure") ~ "Unsure", 
-    str_detect(name, "succeed") ~ "Succeed",
-    str_detect(name, "fail") ~ "Fail",
-    str_detect(name, "conti") ~ "Contingent"
+    str_detect(name, "unsure") ~ "Unsure: Confused about the notion of Asian American coalitions", 
+    str_detect(name, "succeed") ~ "Succeed: Asian Americans would unite",
+    str_detect(name, "fail") ~ "Fail: Asian Americans would not unite",
+    str_detect(name, "conti") ~ "Contingent: Asian American coalition is contingent"
   )) %>%
   ggplot(aes(x = hate_crime_treatment, y = value)) +
   geom_col() +
@@ -1108,8 +1068,18 @@ coded_text %>%
        y = "Proportion of the responses",
        title = "Content analysis of open-ended responses",
        subtitle = "Excluding non- and misread-responses (n = 1,608)")
+```
 
-ggsave(here("outputs", "content_analysis.png"), width = 10, height = 6)
+```{r}
+png(filename = here("outputs", "content_analysis.png"),
+    height = 7, 
+    width = 10, 
+    unit = "in", 
+    res = 1200)
+
+ca_plot
+
+dev.off()
 ```
 
 ## keyATM
