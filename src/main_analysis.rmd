@@ -247,6 +247,16 @@ df_num_desc <- df_numeric %>%
 ```
 
 ```{r}
+t.test(df_numeric[df_numeric$hate_crime_treatment == 3,]$racial_linked_fate, 
+       df_numeric[df_numeric$hate_crime_treatment == 4,]$racial_linked_fate) %>%
+  tidy(conf.int = T)
+
+t.test(df_numeric[df_numeric$hate_crime_treatment == 3,]$ethnic_linked_fate, 
+       df_numeric[df_numeric$hate_crime_treatment == 4,]$ethnic_linked_fate) %>%
+  tidy(conf.int = T)
+```
+
+```{r}
 df_t2_plot <- df_num_desc %>%
   filter(hate_crime_treatment %in% c(1,2)) %>%
   ggplot(aes(x = value, 
@@ -420,10 +430,18 @@ df_numeric$completion_time <- difftime(df_numeric$endtime, df_numeric$starttime,
 
 median(df_numeric$completion_time)
 
+t.test(df_numeric[df_numeric$hate_crime_treatment == 3,]$completion_time, 
+       df_numeric[df_numeric$hate_crime_treatment == 4,]$completion_time) %>%
+  tidy(conf.int = T)
+```
+
+```{r}
 df_numeric <- df_numeric %>%
   mutate(completion_time = ifelse(completion_time >= 60, NA, completion_time)) %>%
   mutate(time_missed = ifelse(is.na(completion_time), 1, 0))
+```
 
+```{r}
 time_mods <- list(
   "Completion time" = feols(completion_time ~ factor(hate_crime_treatment), data = df_numeric, vcov = "hetero")
   )
