@@ -830,12 +830,10 @@ results <- bind_rows(rl_results, el_results)
 
 ```{r}
 write_csv(results, here("processed_data", "cate_results.csv"))
+```
 
+```{r}
 results <- read_csv(here("processed_data", "cate_results.csv"))
-
-View(results %>%
-  filter(estimand == "MCATE") %>%
-  arrange(outcome, treatment, desc(estimate)))
 ```
 
 ## Pooled (Figure 2)
@@ -907,19 +905,11 @@ cate_sum <- results_pooled %>%
 ```
 
 ```{r}
-cate_sum %>%
-  dplyr::group_by(treatment, outcome) %>%
-  dplyr::count(significant) %>%
-  ungroup() %>%
-  dplyr::group_by(treatment, outcome) %>%
-  mutate(freq = n/20) %>%
-  View()
+cate_sum_wide <- cate_sum %>%
+  left_join(rp_wide)
 ```
 
 ```{r}
-cate_sum_wide <- cate_sum %>%
-  left_join(rp_wide)
-
 pooled_cate_plot <- cate_sum_wide %>%
   ggplot(aes(x = fct_reorder(level, estimate), 
              y = estimate,
@@ -931,7 +921,7 @@ pooled_cate_plot <- cate_sum_wide %>%
   geom_pointrange(position = position_dodge(width = 0.2)) +
   #geom_text_repel(position = position_dodge(width = 0.2)) +
   coord_flip() +
-  facet_wrap(~treatment_fct, ncol = 3, nrow = 1) +
+  facet_wrap(~treatment_fct, ncol = 1, nrow = 3) +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
   labs(x = "",
        y = "Estimated CATE",
