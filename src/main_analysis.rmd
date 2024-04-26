@@ -918,7 +918,7 @@ pooled_cate_plot <- cate_sum_wide %>%
              label = round(estimate, 2), 
              col = significant)) +
   geom_pointrange(position = position_dodge(width = 0.2)) +
-  geom_text(aes(label = level), hjust = 0, nudge_y = 0.2, size = 3) +
+  geom_text(aes(label = level), hjust = 0, nudge_y = 0.2, size = 2) +
   coord_flip() +
   facet_grid(treatment_fct~outcome, switch = "y") +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
@@ -929,7 +929,7 @@ pooled_cate_plot <- cate_sum_wide %>%
   theme(legend.position = "bottom") +
   scale_color_grey(start = 0.7, end = 0.3) +
   scale_x_discrete(breaks = NULL) +
-  ylim(c(-0.5, 1))
+  ylim(c(-0.4,0.8))
 
 pooled_cate_plot
 ```
@@ -938,8 +938,8 @@ pooled_cate_plot
 
 ```{r}
 png(filename = here("outputs", "pooled_cate_plot.png"), 
-    height = 10, 
-    width = 16, 
+    height = 8, 
+    width = 12, 
     unit = "in", 
     res = 1200)
 
