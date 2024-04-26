@@ -910,7 +910,8 @@ cate_sum_wide <- cate_sum %>%
 ```
 
 ```{r}
-pooled_cate_plot <- cate_sum_wide %>%
+pooled_cate_rl_plot <- cate_sum_wide %>%
+  filter(outcome == "Racial linked fate") %>%
   ggplot(aes(x = fct_reorder(level, estimate), 
              y = estimate,
              ymin = estimate - 1.96 * std_error,
@@ -920,9 +921,33 @@ pooled_cate_plot <- cate_sum_wide %>%
   geom_pointrange(position = position_dodge(width = 0.2)) +
   geom_text(aes(label = level), hjust = 0, nudge_y = 0.2, size = 2) +
   coord_flip() +
-  facet_grid(treatment_fct~outcome, switch = "y") +
+  facet_wrap(~treatment_fct, ncol = 1) +
   geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
-  labs(x = "",
+  labs(title = "Racial linked fate",
+       x = "",
+       y = "Estimated CATE",
+       shape = "Outcome",
+       col = "Statistical significance") +
+  theme(legend.position = "none") +
+  scale_color_grey(start = 0.7, end = 0.3) +
+  scale_x_discrete(breaks = NULL) +
+  ylim(c(-0.4,0.8))
+
+pooled_cate_el_plot <- cate_sum_wide %>%
+  filter(outcome != "Racial linked fate") %>%
+  ggplot(aes(x = fct_reorder(level, estimate), 
+             y = estimate,
+             ymin = estimate - 1.96 * std_error,
+             ymax = estimate + 1.96 * std_error,
+             label = round(estimate, 2), 
+             col = significant)) +
+  geom_pointrange(position = position_dodge(width = 0.2)) +
+  geom_text(aes(label = level), hjust = 0, nudge_y = 0.2, size = 2) +
+  coord_flip() +
+  facet_wrap(~treatment_fct, ncol = 1) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+  labs(title = "Ethnic linked fate",
+       x = "",
        y = "Estimated CATE",
        shape = "Outcome",
        col = "Statistical significance") +
@@ -930,20 +955,18 @@ pooled_cate_plot <- cate_sum_wide %>%
   scale_color_grey(start = 0.7, end = 0.3) +
   scale_x_discrete(breaks = NULL) +
   ylim(c(-0.4,0.8))
-
-pooled_cate_plot
 ```
 
 ## Save
 
 ```{r}
 png(filename = here("outputs", "pooled_cate_plot.png"), 
-    height = 8, 
-    width = 12, 
+    height = 12, 
+    width = 8, 
     unit = "in", 
     res = 1200)
 
-pooled_cate_plot
+pooled_cate_rl_plot / pooled_cate_el_plot
 
 dev.off()
 ```
