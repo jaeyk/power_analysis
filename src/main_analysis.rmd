@@ -971,6 +971,28 @@ pooled_cate_rl_plot / pooled_cate_el_plot
 dev.off()
 ```
 
+```{r}
+png(filename = here("outputs", "pooled_cate_rl_plot.png"), 
+    height = 8, 
+    width = 8, 
+    unit = "in", 
+    res = 1200)
+
+pooled_cate_rl_plot
+
+dev.off()
+
+png(filename = here("outputs", "pooled_cate_el_plot.png"), 
+    height = 8, 
+    width = 8, 
+    unit = "in", 
+    res = 1200)
+
+pooled_cate_el_plot
+
+dev.off()
+```
+
 # Open-ended texts
 
 ## Descriptive statitics 
