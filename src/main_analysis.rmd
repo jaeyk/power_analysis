@@ -1057,9 +1057,9 @@ df_string_word_pct <- df_string %>%
   mutate(fail = ifelse(str_detect(tolower(asian_open_ended_question), "fail"), 1, 0)) %>%
   select(hate_crime_treatment, succeed, fail)
 
-datasummary(All(df_string_word_pct) ~ hate_crime_treatment * (mean_no_na + std_no_na),
-            data = df_string_word_pct,
-            output = here("outputs", "balance_word_pct.docx"))
+#datasummary(All(df_string_word_pct) ~ hate_crime_treatment * (mean_no_na + std_no_na),
+#            data = df_string_word_pct,
+#            output = here("outputs", "balance_word_pct.docx"))
 ```
 
 ## Content analysis (Figure 3)
@@ -1156,7 +1156,7 @@ docvars(key_corpus, "hate_crime_treatment") <- corpus$hate_crime_treatment
 
 ```{r}
 # Tokenize 
-data_tokens <- tokens(key_corpus) 
+data_tokens <- tokens(key_corpus)
 ```
 
 ### Document-term matrix
@@ -1172,7 +1172,7 @@ keyATM_docs <- keyATM_read(texts = data_dfm)
 
 keywords <- list(
     
-    "diverisy" = c("language", "culture", "history", "generation", "east", "south", "chinese", "indian", "japanese", "filipino", "korean", "class", "privilege", "agenda", "competition", "fight", "internal"),
+    "diversity" = c("language", "culture", "history", "generation", "east", "south", "chinese", "indian", "japanese", "filipino", "korean", "class", "privilege", "agenda", "competition", "fight", "internal"),
     
     "political_agency" = c("assert", "voice", "silent", "stay", "vote", "participate", "leader"),
     
