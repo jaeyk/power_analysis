@@ -928,7 +928,7 @@ pooled_cate_rl_plot <- cate_sum_wide %>%
        y = "Estimated CATE",
        shape = "Outcome",
        col = "Statistical significance") +
-  theme(legend.position = "none") +
+  theme(legend.position = "bottom") +
   scale_color_grey(start = 0.7, end = 0.3) +
   scale_x_discrete(breaks = NULL) +
   ylim(c(-0.4,0.8))
@@ -981,7 +981,9 @@ png(filename = here("outputs", "pooled_cate_rl_plot.png"),
 pooled_cate_rl_plot
 
 dev.off()
+```
 
+```{r}
 png(filename = here("outputs", "pooled_cate_el_plot.png"), 
     height = 8, 
     width = 8, 
